@@ -1,4 +1,5 @@
 import { loginAction } from "@/app/actions";
+import InstallButton from "@/components/InstallButton";
 
 export default async function LoginPage({
   searchParams,
@@ -38,6 +39,10 @@ export default async function LoginPage({
           Entrar
         </button>
       </form>
+
+      <div className="mt-6 w-full max-w-xs">
+        <InstallButton />
+      </div>
     </main>
   );
 }
