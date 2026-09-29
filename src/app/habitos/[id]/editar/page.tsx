@@ -12,7 +12,7 @@ export default async function EditarHabitoPage({ params }: { params: Promise<{ i
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">Editar hábito</h1>
+        <h1 className="text-2xl font-semibold text-text">Editar hábito</h1>
       </header>
 
       <HabitForm

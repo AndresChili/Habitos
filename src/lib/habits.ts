@@ -1,7 +1,18 @@
 import { prisma } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { dayKey, isoWeekday, monthRange, nowInTz, parseDayKey, weekRange } from "@/lib/dates";
-import { addDays, subDays } from "date-fns";
+import {
+  addDays,
+  endOfISOWeek,
+  endOfMonth,
+  format,
+  startOfISOWeek,
+  startOfMonth,
+  subDays,
+  subMonths,
+  subWeeks,
+} from "date-fns";
+import { es } from "date-fns/locale";
 import type { Habit, HabitPause, QuotaPeriod, RecurrenceType } from "@/generated/prisma/client";
 
 export type HabitInput = {
@@ -257,3 +268,140 @@ async function getSettingsTz(): Promise<string> {
 }
 
 export { getSettingsTz };
+
+export type HeatCell = { date: string; state: "done" | "missed" | "not_scheduled" | "today_pending" | "future" };
+
+export type FixedHabitDetail = {
+  kind: "FIXED_DAYS";
+  id: string;
+  name: string;
+  weekdays: number[];
+  cells: HeatCell[];
+  currentStreak: number;
+  completionRate: number | null;
+  previousCompletionRate: number | null;
+  doneCount: number;
+};
+
+export type QuotaPeriodEntry = { label: string; done: number; target: number; met: boolean; current: boolean };
+
+export type QuotaHabitDetail = {
+  kind: "QUOTA";
+  id: string;
+  name: string;
+  quotaPeriod: QuotaPeriod;
+  quotaTarget: number;
+  periods: QuotaPeriodEntry[];
+  currentStreak: number;
+  completionRate: number | null;
+  previousMet: boolean | null;
+};
+
+export type HabitDetail = FixedHabitDetail | QuotaHabitDetail;
+
+const HEATMAP_WEEKS = 18;
+const COMPARE_WINDOW_DAYS = 42;
+
+export async function getHabitDetail(id: string, tz: string): Promise<HabitDetail | null> {
+  const habit = await prisma.habit.findUnique({ where: { id }, include: { pauses: true } });
+  if (!habit) return null;
+
+  const now = nowInTz(tz);
+  const todayK = dayKey(now);
+  const logs = await prisma.habitLog.findMany({ where: { habitId: id }, select: { date: true } });
+  const loggedDates = new Set(logs.map((l) => l.date));
+
+  if (habit.recurrenceType === "FIXED_DAYS") {
+    const habitStartKey = dayKey(habit.createdAt);
+    const gridStart = startOfISOWeek(subDays(now, HEATMAP_WEEKS * 7 - 1));
+    const cells: HeatCell[] = [];
+    for (let cursor = gridStart; dayKey(cursor) <= todayK; cursor = addDays(cursor, 1)) {
+      const key = dayKey(cursor);
+      let state: HeatCell["state"];
+      if (key < habitStartKey || isPausedOn(habit.pauses, key) || !habit.weekdays.includes(isoWeekday(cursor))) {
+        state = "not_scheduled";
+      } else if (key === todayK && !loggedDates.has(key)) {
+        state = "today_pending";
+      } else if (loggedDates.has(key)) {
+        state = "done";
+      } else {
+        state = "missed";
+      }
+      cells.push({ date: key, state });
+    }
+
+    const rateOver = (from: Date, to: Date): number | null => {
+      let scheduled = 0;
+      let done = 0;
+      for (let cursor = from; dayKey(cursor) <= dayKey(to); cursor = addDays(cursor, 1)) {
+        const key = dayKey(cursor);
+        if (
+          key >= habitStartKey &&
+          key <= todayK &&
+          !isPausedOn(habit.pauses, key) &&
+          habit.weekdays.includes(isoWeekday(cursor))
+        ) {
+          scheduled++;
+          if (loggedDates.has(key)) done++;
+        }
+      }
+      return scheduled > 0 ? done / scheduled : null;
+    };
+
+    const currentStart = subDays(now, COMPARE_WINDOW_DAYS - 1);
+    const prevEnd = subDays(currentStart, 1);
+    const prevStart = subDays(prevEnd, COMPARE_WINDOW_DAYS - 1);
+
+    return {
+      kind: "FIXED_DAYS",
+      id: habit.id,
+      name: habit.name,
+      weekdays: habit.weekdays,
+      cells,
+      currentStreak: computeFixedStreak(habit, habit.pauses, loggedDates, todayK),
+      completionRate: rateOver(currentStart, now),
+      previousCompletionRate: rateOver(prevStart, prevEnd),
+      doneCount: loggedDates.size,
+    };
+  }
+
+  const periodCount = 8;
+  const periods: QuotaPeriodEntry[] = [];
+  for (let i = periodCount - 1; i >= 0; i--) {
+    let start: Date;
+    let end: Date;
+    let label: string;
+    if (habit.quotaPeriod === "WEEK") {
+      const base = subWeeks(now, i);
+      start = startOfISOWeek(base);
+      end = endOfISOWeek(base);
+      label = format(start, "d MMM", { locale: es });
+    } else {
+      const base = subMonths(now, i);
+      start = startOfMonth(base);
+      end = endOfMonth(base);
+      label = format(start, "MMM yyyy", { locale: es });
+    }
+    const done = [...loggedDates].filter((d) => d >= dayKey(start) && d <= dayKey(end)).length;
+    periods.push({ label, done, target: habit.quotaTarget!, met: done >= habit.quotaTarget!, current: i === 0 });
+  }
+
+  const past = periods.slice(0, -1);
+  let currentStreak = periods[periods.length - 1].met ? 1 : 0;
+  for (let i = past.length - 1; i >= 0; i--) {
+    if (past[i].met) currentStreak++;
+    else break;
+  }
+
+  return {
+    kind: "QUOTA",
+    id: habit.id,
+    name: habit.name,
+    quotaPeriod: habit.quotaPeriod!,
+    quotaTarget: habit.quotaTarget!,
+    periods,
+    currentStreak,
+    completionRate: past.length > 0 ? past.filter((p) => p.met).length / past.length : null,
+    previousMet: past.length > 0 ? past[past.length - 1].met : null,
+  };
+}

@@ -26,7 +26,7 @@ export default function HabitActions({
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => restoreHabitAction(id))}
-        className="text-xs text-neutral-400 transition hover:text-neutral-900 disabled:opacity-50 dark:hover:text-neutral-100"
+        className="text-xs text-text-faint transition hover:text-text-muted disabled:opacity-50"
       >
         Restaurar
       </button>
@@ -34,15 +34,18 @@ export default function HabitActions({
   }
 
   return (
-    <div className="flex items-center gap-3 text-xs text-neutral-400">
-      <Link href={`/habitos/${id}/editar`} className="transition hover:text-neutral-900 dark:hover:text-neutral-100">
+    <div className="flex items-center gap-3 text-xs text-text-faint">
+      <Link href={`/habitos/${id}`} className="transition hover:text-accent">
+        Progreso
+      </Link>
+      <Link href={`/habitos/${id}/editar`} className="transition hover:text-text-muted">
         Editar
       </Link>
       <button
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => (paused ? resumeHabitAction(id) : pauseHabitAction(id)))}
-        className="transition hover:text-neutral-900 disabled:opacity-50 dark:hover:text-neutral-100"
+        className="transition hover:text-text-muted disabled:opacity-50"
       >
         {paused ? "Reanudar" : "Pausar"}
       </button>
@@ -50,7 +53,7 @@ export default function HabitActions({
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => archiveHabitAction(id))}
-        className="transition hover:text-red-500 disabled:opacity-50"
+        className="transition hover:text-danger disabled:opacity-50"
       >
         Eliminar
       </button>

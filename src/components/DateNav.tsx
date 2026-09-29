@@ -16,34 +16,34 @@ export default function DateNav({ date, todayKey }: { date: string; todayKey: st
   }
 
   return (
-    <header className="flex items-center justify-between">
+    <header className="flex items-center justify-between gap-2">
       <button
         type="button"
         onClick={() => go(format(addDays(parsed, -1), "yyyy-MM-dd"))}
-        className="rounded-lg px-2 py-1 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-faint transition hover:bg-surface-muted hover:text-text-muted"
         aria-label="Día anterior"
       >
-        ←
+        ‹
       </button>
 
-      <div className="text-center">
-        <p className="text-sm capitalize text-neutral-400">{isToday ? "Hoy" : label}</p>
-        {isToday && <h1 className="text-2xl font-semibold capitalize">{label}</h1>}
+      <div className="min-w-0 flex-1 text-center">
+        {!isToday && <p className="text-xs font-medium uppercase tracking-wide text-text-faint">{format(parsed, "yyyy") === format(new Date(), "yyyy") ? "" : format(parsed, "yyyy")}</p>}
+        <h1 className="truncate text-xl font-semibold capitalize text-text">{isToday ? "Hoy" : label}</h1>
         <input
           type="date"
           value={date}
           onChange={(e) => e.target.value && go(e.target.value)}
-          className="mt-1 bg-transparent text-xs text-neutral-400 outline-none"
+          className="mt-0.5 bg-transparent text-xs text-text-faint outline-none"
         />
       </div>
 
       <button
         type="button"
         onClick={() => go(format(addDays(parsed, 1), "yyyy-MM-dd"))}
-        className="rounded-lg px-2 py-1 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-faint transition hover:bg-surface-muted hover:text-text-muted"
         aria-label="Día siguiente"
       >
-        →
+        ›
       </button>
     </header>
   );

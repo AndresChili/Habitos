@@ -23,23 +23,25 @@ export default function HabitToggle({
       type="button"
       disabled={pending}
       onClick={() => startTransition(() => toggleHabitLogAction(habitId, date))}
-      className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition disabled:opacity-60 ${
+      className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition disabled:opacity-60 ${
         done
-          ? "border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900"
-          : "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:border-neutral-700"
+          ? "border-accent/30 bg-accent-soft text-text"
+          : "border-border bg-surface text-text hover:border-text-faint"
       }`}
     >
-      <span className="flex items-center gap-3">
-        <span
-          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs ${
-            done ? "border-white/70" : "border-neutral-300 dark:border-neutral-600"
-          }`}
-        >
-          {done && "✓"}
-        </span>
-        {name}
+      <span
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs transition ${
+          done ? "border-accent bg-accent text-accent-on" : "border-border"
+        }`}
+      >
+        {done && "✓"}
       </span>
-      {streak > 0 && <span className="shrink-0 text-xs opacity-70">🔥 {streak}</span>}
+      <span className="min-w-0 flex-1 truncate">{name}</span>
+      {streak > 0 && (
+        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-muted">
+          {streak}
+        </span>
+      )}
     </button>
   );
 }

@@ -1,5 +1,6 @@
 import { loginAction } from "@/app/actions";
 import InstallButton from "@/components/InstallButton";
+import { IconHabits } from "@/components/icons";
 
 export default async function LoginPage({
   searchParams,
@@ -10,37 +11,38 @@ export default async function LoginPage({
   const next = params.next ?? "/";
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-neutral-50 px-6 dark:bg-neutral-950">
-      <form action={loginAction} className="w-full max-w-xs space-y-5">
-        <div className="space-y-1 text-center">
-          <h1 className="text-xl font-medium text-neutral-900 dark:text-neutral-100">Hábitos</h1>
-          <p className="text-sm text-neutral-500">Introduce tu código para entrar</p>
-        </div>
+    <main className="flex min-h-dvh items-center justify-center bg-bg px-6">
+      <div className="w-full max-w-xs space-y-8">
+        <form action={loginAction} className="space-y-5">
+          <div className="space-y-2 text-center">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-accent-soft text-accent">
+              <IconHabits className="h-6 w-6" />
+            </div>
+            <h1 className="text-xl font-semibold text-text">Hábitos</h1>
+            <p className="text-sm text-text-muted">Introduce tu código para entrar</p>
+          </div>
 
-        <input type="hidden" name="next" value={next} />
-        <input
-          type="password"
-          inputMode="numeric"
-          name="passcode"
-          autoFocus
-          required
-          placeholder="••••••"
-          className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-center text-lg tracking-widest text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-neutral-300"
-        />
+          <input type="hidden" name="next" value={next} />
+          <input
+            type="password"
+            inputMode="numeric"
+            name="passcode"
+            autoFocus
+            required
+            placeholder="••••••"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-center text-lg tracking-widest text-text outline-none transition focus:border-accent"
+          />
 
-        {params.error && (
-          <p className="text-center text-sm text-red-500">Código incorrecto.</p>
-        )}
+          {params.error && <p className="text-center text-sm text-danger">Código incorrecto.</p>}
 
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-neutral-900 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
-        >
-          Entrar
-        </button>
-      </form>
+          <button
+            type="submit"
+            className="w-full rounded-xl bg-accent py-3 text-sm font-medium text-accent-on transition hover:bg-accent-strong"
+          >
+            Entrar
+          </button>
+        </form>
 
-      <div className="mt-6 w-full max-w-xs">
         <InstallButton />
       </div>
     </main>

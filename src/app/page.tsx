@@ -33,9 +33,9 @@ export default async function TodayPage({
       {date === todayKey && <WeightQuickInput date={date} initialWeight={weight?.weightKg ?? null} />}
 
       <section className="space-y-2">
-        <h2 className="text-sm font-medium text-neutral-500">Hábitos</h2>
+        <h2 className="text-sm font-medium text-text-muted">Hábitos</h2>
         {habits.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-neutral-300 px-4 py-3 text-sm text-neutral-400 dark:border-neutral-700">
+          <p className="rounded-xl border border-dashed border-border px-4 py-3 text-sm text-text-faint">
             Sin hábitos programados este día.
           </p>
         ) : (
@@ -48,7 +48,7 @@ export default async function TodayPage({
       </section>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-medium text-neutral-500">Tareas</h2>
+        <h2 className="text-sm font-medium text-text-muted">Tareas</h2>
         <TaskForm date={date} />
         {tasks.length > 0 && (
           <div className="space-y-2">

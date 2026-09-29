@@ -49,13 +49,13 @@ export default function InstallButton() {
       <button
         type="button"
         onClick={handleClick}
-        className="w-full rounded-xl border border-neutral-300 py-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-900"
+        className="w-full rounded-xl border border-border py-3 text-sm font-medium text-text-muted transition hover:bg-surface-muted"
       >
         Instalar app
       </button>
 
       {showIosHint && (
-        <p className="rounded-xl bg-neutral-100 px-4 py-3 text-center text-xs text-neutral-500 dark:bg-neutral-900 dark:text-neutral-400">
+        <p className="rounded-xl bg-surface-muted px-4 py-3 text-center text-xs text-text-muted">
           Toca el botón Compartir <span aria-hidden>􀈂</span> y luego &ldquo;Añadir a pantalla de
           inicio&rdquo;.
         </p>

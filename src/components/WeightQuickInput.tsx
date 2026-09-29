@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { setWeightAction } from "@/app/actions";
+import { IconWeight } from "@/components/icons";
 
 export default function WeightQuickInput({
   date,
@@ -26,8 +27,9 @@ export default function WeightQuickInput({
   }
 
   return (
-    <form onSubmit={submit} className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900">
-      <span className="text-sm text-neutral-500">Peso de hoy</span>
+    <form onSubmit={submit} className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+      <IconWeight className="h-4 w-4 shrink-0 text-text-faint" />
+      <span className="shrink-0 text-sm text-text-muted">Peso de hoy</span>
       <input
         inputMode="decimal"
         value={value}
@@ -36,17 +38,17 @@ export default function WeightQuickInput({
           setSaved(false);
         }}
         placeholder="72.4"
-        className="w-20 rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:focus:border-neutral-300"
+        className="w-16 rounded-lg border border-border bg-surface px-2 py-1 text-sm text-text outline-none transition focus:border-accent"
       />
-      <span className="text-sm text-neutral-400">kg</span>
+      <span className="shrink-0 text-sm text-text-faint">kg</span>
       <button
         type="submit"
         disabled={pending || !value.trim()}
-        className="ml-auto shrink-0 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+        className="ml-auto shrink-0 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-on disabled:opacity-50"
       >
         {saved ? "Guardado" : "Guardar"}
       </button>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </form>
   );
 }
