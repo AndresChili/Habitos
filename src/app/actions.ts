@@ -11,6 +11,7 @@ import {
   resumeHabit,
   restoreHabit,
   toggleLog,
+  toggleQuotaLog,
   updateHabit,
   type HabitInput,
 } from "@/lib/habits";
@@ -46,6 +47,12 @@ export async function toggleHabitLogAction(habitId: string, date: string) {
   await toggleLog(habitId, date);
   revalidatePath("/");
   revalidatePath("/habitos");
+}
+
+export async function toggleQuotaLogAction(habitId: string) {
+  await toggleQuotaLog(habitId, await getSettingsTz());
+  revalidatePath("/habitos");
+  revalidatePath("/");
 }
 
 export async function createHabitAction(input: HabitInput) {

@@ -262,6 +262,27 @@ export async function getQuotaHabits(tz: string): Promise<QuotaHabit[]> {
   });
 }
 
+// For QUOTA habits: toggles a single completion within the current period —
+// clicking "done" logs today, clicking again removes whichever log exists
+// in the period (there should only ever be one, since target is always 1).
+export async function toggleQuotaLog(habitId: string, tz: string): Promise<boolean> {
+  const habit = await prisma.habit.findUnique({ where: { id: habitId } });
+  if (!habit || habit.recurrenceType !== "QUOTA") return false;
+
+  const now = nowInTz(tz);
+  const { start, end } = habit.quotaPeriod === "WEEK" ? weekRange(now) : monthRange(now);
+  const existing = await prisma.habitLog.findFirst({
+    where: { habitId, date: { gte: dayKey(start), lte: dayKey(end) } },
+  });
+
+  if (existing) {
+    await prisma.habitLog.delete({ where: { id: existing.id } });
+    return false;
+  }
+  await prisma.habitLog.create({ data: { habitId, date: dayKey(now) } });
+  return true;
+}
+
 async function getSettingsTz(): Promise<string> {
   const settings = await getSettings();
   return settings.timezone;

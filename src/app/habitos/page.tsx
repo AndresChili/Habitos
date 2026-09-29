@@ -1,6 +1,7 @@
 import { getQuotaHabits, getSettingsTz, isCurrentlyPaused, listHabits } from "@/lib/habits";
 import HabitForm from "@/components/HabitForm";
 import HabitActions from "@/components/HabitActions";
+import QuotaToggle from "@/components/QuotaToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function HabitosPage() {
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-medium text-text-muted">Días fijos</h2>
+        <h2 className="text-sm font-medium text-text-muted">Días concretos</h2>
         {fixed.length === 0 ? (
           <p className="text-sm text-text-faint">Ninguno todavía.</p>
         ) : (
@@ -32,7 +33,7 @@ export default async function HabitosPage() {
                 <div>
                   <p className="text-text">{h.name}</p>
                   <p className="text-xs text-text-faint">
-                    {h.weekdays.map((d) => WEEKDAY_LABELS[d - 1]).join(" ")}
+                    {h.weekdays.length === 7 ? "Diario" : h.weekdays.map((d) => WEEKDAY_LABELS[d - 1]).join(" ")}
                     {isCurrentlyPaused(h.pauses) && " · pausado"}
                   </p>
                 </div>
@@ -44,20 +45,23 @@ export default async function HabitosPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-medium text-text-muted">Cuota por periodo</h2>
+        <h2 className="text-sm font-medium text-text-muted">Semanal / mensual</h2>
         {quotaHabits.length === 0 ? (
           <p className="text-sm text-text-faint">Ninguno todavía.</p>
         ) : (
           <div className="space-y-2">
             {quotaHabits.map((h) => (
-              <div key={h.id} className="rounded-xl border border-border bg-surface px-4 py-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <p className="text-text">{h.name}</p>
+              <div key={h.id} className="space-y-1">
+                <QuotaToggle
+                  habitId={h.id}
+                  name={h.name}
+                  done={h.done > 0}
+                  periodLabel={h.periodLabel}
+                  paused={h.paused}
+                />
+                <div className="flex justify-end pr-1">
                   <HabitActions id={h.id} archived={false} paused={h.paused} />
                 </div>
-                <p className="mt-1 text-xs text-text-faint">
-                  {h.paused ? "pausado" : `${h.done}/${h.quotaTarget} ${h.periodLabel}`}
-                </p>
               </div>
             ))}
           </div>

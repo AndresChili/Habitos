@@ -34,8 +34,10 @@ export default async function HabitDetailPage({ params }: { params: Promise<{ id
         <h1 className="text-2xl font-semibold text-text">{detail.name}</h1>
         <p className="text-sm text-text-muted">
           {detail.kind === "FIXED_DAYS"
-            ? detail.weekdays.map((d) => WEEKDAY_LABELS[d - 1]).join(" · ")
-            : `${detail.quotaTarget} veces por ${detail.quotaPeriod === "WEEK" ? "semana" : "mes"}`}
+            ? detail.weekdays.length === 7
+              ? "Diario"
+              : detail.weekdays.map((d) => WEEKDAY_LABELS[d - 1]).join(" · ")
+            : `Una vez por ${detail.quotaPeriod === "WEEK" ? "semana" : "mes"}`}
         </p>
       </header>
 
