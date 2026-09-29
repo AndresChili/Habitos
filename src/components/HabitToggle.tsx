@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { toggleHabitAction } from "@/app/actions";
+import { toggleHabitLogAction } from "@/app/actions";
 
 export default function HabitToggle({
   habitId,
@@ -22,7 +22,7 @@ export default function HabitToggle({
     <button
       type="button"
       disabled={pending}
-      onClick={() => startTransition(() => toggleHabitAction(habitId, date))}
+      onClick={() => startTransition(() => toggleHabitLogAction(habitId, date))}
       className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition disabled:opacity-60 ${
         done
           ? "border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900"

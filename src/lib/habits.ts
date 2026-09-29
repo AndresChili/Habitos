@@ -1,159 +1,124 @@
 import { prisma } from "@/lib/db";
-import {
-  dayKey,
-  isoWeekKey,
-  monthKey,
-  monthRange,
-  nowInTz,
-  weekRange,
-} from "@/lib/dates";
-import {
-  addDays,
-  addMonths,
-  endOfISOWeek,
-  endOfMonth,
-  parseISO,
-  setISOWeek,
-  setISOWeekYear,
-  startOfISOWeek,
-  subMonths,
-  subWeeks,
-} from "date-fns";
-import type { Frequency, Settings } from "@/generated/prisma/client";
+import { getSettings } from "@/lib/settings";
+import { dayKey, isoWeekday, monthRange, nowInTz, parseDayKey, weekRange } from "@/lib/dates";
+import { addDays, subDays } from "date-fns";
+import type { Habit, HabitPause, QuotaPeriod, RecurrenceType } from "@/generated/prisma/client";
 
-const SETTINGS_ID = 1;
+export type HabitInput = {
+  name: string;
+  recurrenceType: RecurrenceType;
+  weekdays?: number[];
+  quotaPeriod?: QuotaPeriod | null;
+  quotaTarget?: number | null;
+};
 
-export async function getSettings(): Promise<Settings> {
-  const existing = await prisma.settings.findUnique({ where: { id: SETTINGS_ID } });
-  if (existing) return existing;
-  return prisma.settings.create({ data: { id: SETTINGS_ID } });
-}
+type ValidatedFields =
+  | { ok: true; weekdays: number[]; quotaPeriod: QuotaPeriod | null; quotaTarget: number | null }
+  | { ok: false; error: string };
 
-function isoWeekStart(key: string): Date {
-  const [year, week] = key.split("-W").map(Number);
-  let d = setISOWeekYear(new Date(), year);
-  d = setISOWeek(d, week);
-  return startOfISOWeek(d);
-}
-
-async function weekCompliance(weekKey: string): Promise<number | null> {
-  const start = isoWeekStart(weekKey);
-  const end = endOfISOWeek(start);
-  const dailyHabits = await prisma.habit.findMany({
-    where: { frequency: "DAILY", archived: false, createdAt: { lte: end } },
-  });
-  if (dailyHabits.length === 0) return null;
-
-  const count = await prisma.habitLog.count({
-    where: {
-      habitId: { in: dailyHabits.map((h) => h.id) },
-      date: { gte: dayKey(start), lte: dayKey(end) },
-    },
-  });
-  return count / (dailyHabits.length * 7);
-}
-
-async function monthWeeklyCompliance(monthKeyStr: string): Promise<boolean | null> {
-  const [year, month] = monthKeyStr.split("-").map(Number);
-  const monthStart = new Date(year, month - 1, 1);
-  const end = endOfMonth(monthStart);
-
-  const weeklyHabits = await prisma.habit.findMany({
-    where: { frequency: "WEEKLY", archived: false, createdAt: { lte: end } },
-  });
-  if (weeklyHabits.length === 0) return null;
-
-  const weeks: { start: Date; end: Date }[] = [];
-  for (let cursor = startOfISOWeek(monthStart); cursor <= end; cursor = addDays(cursor, 7)) {
-    weeks.push({ start: cursor, end: endOfISOWeek(cursor) });
+function validateRecurrence(input: HabitInput): ValidatedFields {
+  if (input.recurrenceType === "FIXED_DAYS") {
+    const weekdays = Array.from(new Set(input.weekdays ?? [])).sort((a, b) => a - b);
+    if (weekdays.length === 0) return { ok: false, error: "Elige al menos un día de la semana." };
+    if (weekdays.some((d) => d < 1 || d > 7)) return { ok: false, error: "Día de la semana inválido." };
+    return { ok: true, weekdays, quotaPeriod: null, quotaTarget: null };
   }
 
-  for (const habit of weeklyHabits) {
-    for (const week of weeks) {
-      if (habit.createdAt > week.end) continue;
-      const count = await prisma.habitLog.count({
-        where: { habitId: habit.id, date: { gte: dayKey(week.start), lte: dayKey(week.end) } },
-      });
-      if (count === 0) return false;
-    }
-  }
-  return true;
+  const quotaPeriod = input.quotaPeriod ?? null;
+  const quotaTarget = input.quotaTarget ?? null;
+  if (!quotaPeriod) return { ok: false, error: "Elige el periodo de la cuota (semana o mes)." };
+  if (!quotaTarget || quotaTarget < 1) return { ok: false, error: "El objetivo debe ser al menos 1." };
+  const max = quotaPeriod === "WEEK" ? 7 : 31;
+  if (quotaTarget > max) return { ok: false, error: `Máximo ${max} veces por ${quotaPeriod === "WEEK" ? "semana" : "mes"}.` };
+  return { ok: true, weekdays: [], quotaPeriod, quotaTarget };
 }
 
-// Lazily evaluated on every Today-page load: cheap, idempotent (guarded by the
-// lastDaily/lastWeekly cursors), no cron needed for a single-user app.
-export async function ensureUnlocks(): Promise<Settings> {
-  const settings = await getSettings();
-  const now = nowInTz(settings.timezone);
-  const currentWeek = isoWeekKey(now);
-  const currentMonth = monthKey(now);
-
-  let { dailyCap, weeklyCap, lastDailyUnlockWeek, lastWeeklyUnlockMonth } = settings;
-  let changed = false;
-
-  if (lastDailyUnlockWeek === null) {
-    lastDailyUnlockWeek = currentWeek;
-    changed = true;
-  } else if (lastDailyUnlockWeek !== currentWeek) {
-    const compliance = await weekCompliance(lastDailyUnlockWeek);
-    if (compliance !== null && compliance >= 0.8) dailyCap += 1;
-    lastDailyUnlockWeek = currentWeek;
-    changed = true;
-  }
-
-  if (lastWeeklyUnlockMonth === null) {
-    lastWeeklyUnlockMonth = currentMonth;
-    changed = true;
-  } else if (lastWeeklyUnlockMonth !== currentMonth) {
-    const met = await monthWeeklyCompliance(lastWeeklyUnlockMonth);
-    if (met) weeklyCap += 1;
-    lastWeeklyUnlockMonth = currentMonth;
-    changed = true;
-  }
-
-  if (!changed) return settings;
-
-  return prisma.settings.update({
-    where: { id: SETTINGS_ID },
-    data: { dailyCap, weeklyCap, lastDailyUnlockWeek, lastWeeklyUnlockMonth },
-  });
-}
-
-export async function listHabits(includeArchived = false) {
+export async function listHabits(includeArchived = false): Promise<(Habit & { pauses: HabitPause[] })[]> {
   return prisma.habit.findMany({
-    where: includeArchived ? undefined : { archived: false },
+    where: includeArchived ? undefined : { archivedAt: null },
+    include: { pauses: true },
     orderBy: { createdAt: "asc" },
   });
 }
 
+export async function getHabit(id: string) {
+  return prisma.habit.findUnique({ where: { id }, include: { pauses: true } });
+}
+
 export async function createHabit(
-  name: string,
-  frequency: Frequency
+  input: HabitInput
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const trimmed = name.trim();
-  if (!trimmed) return { ok: false, error: "El nombre no puede estar vacío." };
+  const name = input.name.trim();
+  if (!name) return { ok: false, error: "El nombre no puede estar vacío." };
 
-  const settings = await ensureUnlocks();
-  const activeCount = await prisma.habit.count({ where: { frequency, archived: false } });
-  const cap =
-    frequency === "DAILY" ? settings.dailyCap : frequency === "WEEKLY" ? settings.weeklyCap : settings.monthlyCap;
+  const fields = validateRecurrence(input);
+  if (!fields.ok) return fields;
 
-  if (activeCount >= cap) {
-    return { ok: false, error: `Ya usas los ${cap} slots disponibles para este tipo.` };
-  }
+  await prisma.habit.create({
+    data: {
+      name,
+      recurrenceType: input.recurrenceType,
+      weekdays: fields.weekdays,
+      quotaPeriod: fields.quotaPeriod,
+      quotaTarget: fields.quotaTarget,
+    },
+  });
+  return { ok: true };
+}
 
-  await prisma.habit.create({ data: { name: trimmed, frequency } });
+export async function updateHabit(
+  id: string,
+  input: HabitInput
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const name = input.name.trim();
+  if (!name) return { ok: false, error: "El nombre no puede estar vacío." };
+
+  const fields = validateRecurrence(input);
+  if (!fields.ok) return fields;
+
+  await prisma.habit.update({
+    where: { id },
+    data: {
+      name,
+      recurrenceType: input.recurrenceType,
+      weekdays: fields.weekdays,
+      quotaPeriod: fields.quotaPeriod,
+      quotaTarget: fields.quotaTarget,
+    },
+  });
   return { ok: true };
 }
 
 export async function archiveHabit(id: string) {
-  await prisma.habit.update({ where: { id }, data: { archived: true } });
+  await prisma.habit.update({ where: { id }, data: { archivedAt: new Date() } });
+}
+
+export async function restoreHabit(id: string) {
+  await prisma.habit.update({ where: { id }, data: { archivedAt: null } });
+}
+
+export async function pauseHabit(id: string, dateKeyToday: string) {
+  const open = await prisma.habitPause.findFirst({ where: { habitId: id, toDate: null } });
+  if (open) return;
+  await prisma.habitPause.create({ data: { habitId: id, fromDate: dateKeyToday } });
+}
+
+export async function resumeHabit(id: string, dateKeyToday: string) {
+  const open = await prisma.habitPause.findFirst({ where: { habitId: id, toDate: null } });
+  if (!open) return;
+  await prisma.habitPause.update({ where: { id: open.id }, data: { toDate: dateKeyToday } });
+}
+
+export function isPausedOn(pauses: HabitPause[], date: string): boolean {
+  return pauses.some((p) => date >= p.fromDate && (p.toDate === null || date <= p.toDate));
+}
+
+export function isCurrentlyPaused(pauses: HabitPause[]): boolean {
+  return pauses.some((p) => p.toDate === null);
 }
 
 export async function toggleLog(habitId: string, date: string) {
-  const existing = await prisma.habitLog.findUnique({
-    where: { habitId_date: { habitId, date } },
-  });
+  const existing = await prisma.habitLog.findUnique({ where: { habitId_date: { habitId, date } } });
   if (existing) {
     await prisma.habitLog.delete({ where: { id: existing.id } });
     return false;
@@ -162,41 +127,33 @@ export async function toggleLog(habitId: string, date: string) {
   return true;
 }
 
-function stepBackKey(key: string, freq: "WEEKLY" | "MONTHLY"): string {
-  if (freq === "WEEKLY") {
-    const back = subWeeks(isoWeekStart(key), 1);
-    return isoWeekKey(back);
-  }
-  const [year, month] = key.split("-").map(Number);
-  const back = subMonths(new Date(year, month - 1, 1), 1);
-  return monthKey(back);
-}
-
-function computeStreak(dates: string[], frequency: Frequency, todayKey: string, tz: string): number {
-  const set = new Set(dates);
-  if (frequency === "DAILY") {
-    let streak = 0;
-    let cursor = parseISO(todayKey);
-    if (!set.has(dayKey(cursor))) cursor = addDays(cursor, -1);
-    while (set.has(dayKey(cursor))) {
-      streak++;
-      cursor = addDays(cursor, -1);
-    }
-    return streak;
-  }
-
-  const freq = frequency as "WEEKLY" | "MONTHLY";
-  const periodKeys = new Set(
-    dates.map((d) => (freq === "WEEKLY" ? isoWeekKey(parseISO(d)) : monthKey(parseISO(d))))
-  );
-  const now = nowInTz(tz);
-  const currentPeriod = freq === "WEEKLY" ? isoWeekKey(now) : monthKey(now);
-  let cursor = currentPeriod;
-  if (!periodKeys.has(cursor)) cursor = stepBackKey(cursor, freq);
+function computeFixedStreak(
+  habit: Habit,
+  pauses: HabitPause[],
+  loggedDates: Set<string>,
+  uptoDateKey: string
+): number {
+  let cursor = loggedDates.has(uptoDateKey) ? parseDayKey(uptoDateKey) : subDays(parseDayKey(uptoDateKey), 1);
+  const habitStart = dayKey(habit.createdAt);
   let streak = 0;
-  while (periodKeys.has(cursor)) {
-    streak++;
-    cursor = stepBackKey(cursor, freq);
+
+  for (let i = 0; i < 3650; i++) {
+    const key = dayKey(cursor);
+    if (key < habitStart) break;
+    if (isPausedOn(pauses, key)) {
+      cursor = subDays(cursor, 1);
+      continue;
+    }
+    if (!habit.weekdays.includes(isoWeekday(cursor))) {
+      cursor = subDays(cursor, 1);
+      continue;
+    }
+    if (loggedDates.has(key)) {
+      streak++;
+      cursor = subDays(cursor, 1);
+    } else {
+      break;
+    }
   }
   return streak;
 }
@@ -204,112 +161,99 @@ function computeStreak(dates: string[], frequency: Frequency, todayKey: string, 
 export type TodayHabit = {
   id: string;
   name: string;
-  frequency: Frequency;
   done: boolean;
   streak: number;
 };
 
-export async function getTodayView() {
-  const settings = await ensureUnlocks();
-  const now = nowInTz(settings.timezone);
-  const today = dayKey(now);
-  const { start: weekStart, end: weekEnd } = weekRange(now);
-  const { start: monthStart, end: monthEnd } = monthRange(now);
+// FIXED_DAYS habits due on `dateKeyValue`, for the "Hoy" screen.
+export async function getFixedHabitsForDate(dateKeyValue: string): Promise<TodayHabit[]> {
+  const weekday = isoWeekday(parseDayKey(dateKeyValue));
+  const habits = await prisma.habit.findMany({
+    where: {
+      recurrenceType: "FIXED_DAYS",
+      archivedAt: null,
+      createdAt: { lte: addDays(parseDayKey(dateKeyValue), 1) },
+      weekdays: { has: weekday },
+    },
+    include: { pauses: true },
+    orderBy: { createdAt: "asc" },
+  });
 
-  const habits = await listHabits();
+  const due = habits.filter((h) => !isPausedOn(h.pauses, dateKeyValue));
+  if (due.length === 0) return [];
+
+  const logs = await prisma.habitLog.findMany({
+    where: { habitId: { in: due.map((h) => h.id) }, date: { lte: dateKeyValue } },
+    select: { habitId: true, date: true },
+  });
+
+  const byHabit = new Map<string, Set<string>>();
+  for (const log of logs) {
+    if (!byHabit.has(log.habitId)) byHabit.set(log.habitId, new Set());
+    byHabit.get(log.habitId)!.add(log.date);
+  }
+
+  return due.map((h) => {
+    const dates = byHabit.get(h.id) ?? new Set<string>();
+    return {
+      id: h.id,
+      name: h.name,
+      done: dates.has(dateKeyValue),
+      streak: computeFixedStreak(h, h.pauses, dates, dateKeyValue),
+    };
+  });
+}
+
+export type QuotaHabit = {
+  id: string;
+  name: string;
+  quotaPeriod: QuotaPeriod;
+  quotaTarget: number;
+  done: number;
+  periodLabel: string;
+  paused: boolean;
+};
+
+// QUOTA habits with current-period progress, for the "Hábitos" screen.
+export async function getQuotaHabits(tz: string): Promise<QuotaHabit[]> {
+  const now = nowInTz(tz);
+  const habits = await prisma.habit.findMany({
+    where: { recurrenceType: "QUOTA", archivedAt: null },
+    include: { pauses: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (habits.length === 0) return [];
+
   const logs = await prisma.habitLog.findMany({
     where: { habitId: { in: habits.map((h) => h.id) } },
     select: { habitId: true, date: true },
   });
-
   const byHabit = new Map<string, string[]>();
   for (const log of logs) {
     if (!byHabit.has(log.habitId)) byHabit.set(log.habitId, []);
     byHabit.get(log.habitId)!.push(log.date);
   }
 
-  const items: TodayHabit[] = habits.map((h) => {
+  return habits.map((h) => {
+    const { start, end } =
+      h.quotaPeriod === "WEEK" ? weekRange(now) : monthRange(now);
     const dates = byHabit.get(h.id) ?? [];
-    let done: boolean;
-    if (h.frequency === "DAILY") done = dates.includes(today);
-    else if (h.frequency === "WEEKLY")
-      done = dates.some((d) => d >= dayKey(weekStart) && d <= dayKey(weekEnd));
-    else done = dates.some((d) => d >= dayKey(monthStart) && d <= dayKey(monthEnd));
-
+    const done = dates.filter((d) => d >= dayKey(start) && d <= dayKey(end)).length;
     return {
       id: h.id,
       name: h.name,
-      frequency: h.frequency,
+      quotaPeriod: h.quotaPeriod!,
+      quotaTarget: h.quotaTarget!,
       done,
-      streak: computeStreak(dates, h.frequency, today, settings.timezone),
+      periodLabel: h.quotaPeriod === "WEEK" ? "esta semana" : "este mes",
+      paused: isCurrentlyPaused(h.pauses),
     };
   });
-
-  const countBy = (f: Frequency) => habits.filter((h) => h.frequency === f).length;
-
-  return {
-    date: today,
-    timezone: settings.timezone,
-    daily: items.filter((i) => i.frequency === "DAILY"),
-    weekly: items.filter((i) => i.frequency === "WEEKLY"),
-    monthly: items.filter((i) => i.frequency === "MONTHLY"),
-    slots: {
-      daily: { used: countBy("DAILY"), cap: settings.dailyCap },
-      weekly: { used: countBy("WEEKLY"), cap: settings.weeklyCap },
-      monthly: { used: countBy("MONTHLY"), cap: settings.monthlyCap },
-    },
-  };
 }
 
-export type DayCellState = "done" | "missed" | "future" | "pending" | "none";
-
-export async function getMonthGrid(year: number, month: number) {
+async function getSettingsTz(): Promise<string> {
   const settings = await getSettings();
-  const monthStart = new Date(year, month - 1, 1);
-  const monthEnd = endOfMonth(monthStart);
-  const todayKey = dayKey(nowInTz(settings.timezone));
-
-  const habits = await listHabits();
-  const logs = await prisma.habitLog.findMany({
-    where: {
-      habitId: { in: habits.map((h) => h.id) },
-      date: { gte: dayKey(monthStart), lte: dayKey(monthEnd) },
-    },
-    select: { habitId: true, date: true },
-  });
-
-  const doneDates = new Map<string, Set<string>>();
-  for (const log of logs) {
-    if (!doneDates.has(log.habitId)) doneDates.set(log.habitId, new Set());
-    doneDates.get(log.habitId)!.add(log.date);
-  }
-
-  const daysInMonth = monthEnd.getDate();
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
-  const rows = habits.map((h) => {
-    const dates = doneDates.get(h.id) ?? new Set<string>();
-    const cells: DayCellState[] = days.map((day) => {
-      const key = dayKey(new Date(year, month - 1, day));
-      const isDone = dates.has(key);
-      if (isDone) return "done";
-      if (h.frequency !== "DAILY") return "none";
-      if (key > todayKey) return "future";
-      if (key === todayKey) return "pending";
-      return "missed";
-    });
-    return { id: h.id, name: h.name, frequency: h.frequency, cells };
-  });
-
-  return { year, month, days, rows };
+  return settings.timezone;
 }
 
-export function nextMonth(year: number, month: number) {
-  const d = addMonths(new Date(year, month - 1, 1), 1);
-  return { year: d.getFullYear(), month: d.getMonth() + 1 };
-}
-
-export function prevMonth(year: number, month: number) {
-  const d = subMonths(new Date(year, month - 1, 1), 1);
-  return { year: d.getFullYear(), month: d.getMonth() + 1 };
-}
+export { getSettingsTz };

@@ -5,6 +5,7 @@ import {
   endOfISOWeek,
   endOfMonth,
   format,
+  getISODay,
   getISOWeek,
   getISOWeekYear,
   parseISO,
@@ -47,4 +48,9 @@ export function monthRange(date: Date): { start: Date; end: Date } {
 export function daysBetweenInclusive(start: Date, end: Date): Date[] {
   const count = differenceInCalendarDays(end, start) + 1;
   return Array.from({ length: count }, (_, i) => addDays(start, i));
+}
+
+// ISO weekday, 1=Monday..7=Sunday — matches Habit.weekdays encoding.
+export function isoWeekday(date: Date): number {
+  return getISODay(date);
 }

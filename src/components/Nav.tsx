@@ -6,8 +6,8 @@ import { logoutAction } from "@/app/actions";
 
 const links = [
   { href: "/", label: "Hoy" },
-  { href: "/calendario", label: "Calendario" },
   { href: "/habitos", label: "Hábitos" },
+  { href: "/peso", label: "Peso" },
 ];
 
 export default function Nav() {

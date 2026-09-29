@@ -1,73 +1,96 @@
-import { ensureUnlocks, listHabits } from "@/lib/habits";
-import CreateHabitForm from "@/components/CreateHabitForm";
-import ArchiveButton from "@/components/ArchiveButton";
-import type { Frequency, Habit } from "@/generated/prisma/client";
+import { getQuotaHabits, getSettingsTz, isCurrentlyPaused, listHabits } from "@/lib/habits";
+import HabitForm from "@/components/HabitForm";
+import HabitActions from "@/components/HabitActions";
 
 export const dynamic = "force-dynamic";
 
-const LABELS: Record<Frequency, string> = {
-  DAILY: "Diarios",
-  WEEKLY: "Semanales",
-  MONTHLY: "Mensuales",
-};
-
-function Group({
-  frequency,
-  habits,
-  cap,
-}: {
-  frequency: Frequency;
-  habits: Habit[];
-  cap: number;
-}) {
-  return (
-    <section className="space-y-3">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-sm font-medium text-neutral-500">{LABELS[frequency]}</h2>
-        <span className="text-xs text-neutral-400">
-          {habits.length}/{cap} slots
-        </span>
-      </div>
-
-      {habits.length > 0 && (
-        <div className="space-y-2">
-          {habits.map((h) => (
-            <div
-              key={h.id}
-              className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm dark:border-neutral-800 dark:bg-neutral-900"
-            >
-              <span>{h.name}</span>
-              <ArchiveButton id={h.id} />
-            </div>
-          ))}
-        </div>
-      )}
-
-      <CreateHabitForm frequency={frequency} disabled={habits.length >= cap} />
-    </section>
-  );
-}
+const WEEKDAY_LABELS = ["L", "M", "X", "J", "V", "S", "D"];
 
 export default async function HabitosPage() {
-  const settings = await ensureUnlocks();
-  const habits = await listHabits();
+  const tz = await getSettingsTz();
+  const [allHabits, quotaHabits] = await Promise.all([listHabits(true), getQuotaHabits(tz)]);
 
-  const daily = habits.filter((h) => h.frequency === "DAILY");
-  const weekly = habits.filter((h) => h.frequency === "WEEKLY");
-  const monthly = habits.filter((h) => h.frequency === "MONTHLY");
+  const active = allHabits.filter((h) => !h.archivedAt);
+  const archived = allHabits.filter((h) => h.archivedAt);
+  const fixed = active.filter((h) => h.recurrenceType === "FIXED_DAYS");
 
   return (
     <div className="space-y-8">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">Hábitos</h1>
-        <p className="text-sm text-neutral-400">
-          Cumple tus hábitos para desbloquear más slots cada semana y cada mes.
-        </p>
+        <p className="text-sm text-neutral-400">Gestiona tus hábitos y su recurrencia.</p>
       </header>
 
-      <Group frequency="DAILY" habits={daily} cap={settings.dailyCap} />
-      <Group frequency="WEEKLY" habits={weekly} cap={settings.weeklyCap} />
-      <Group frequency="MONTHLY" habits={monthly} cap={settings.monthlyCap} />
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-neutral-500">Días fijos</h2>
+        {fixed.length === 0 ? (
+          <p className="text-sm text-neutral-400">Ninguno todavía.</p>
+        ) : (
+          <div className="space-y-2">
+            {fixed.map((h) => (
+              <div
+                key={h.id}
+                className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm dark:border-neutral-800 dark:bg-neutral-900"
+              >
+                <div>
+                  <p>{h.name}</p>
+                  <p className="text-xs text-neutral-400">
+                    {h.weekdays.map((d) => WEEKDAY_LABELS[d - 1]).join(" ")}
+                    {isCurrentlyPaused(h.pauses) && " · pausado"}
+                  </p>
+                </div>
+                <HabitActions id={h.id} archived={false} paused={isCurrentlyPaused(h.pauses)} />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-neutral-500">Cuota por periodo</h2>
+        {quotaHabits.length === 0 ? (
+          <p className="text-sm text-neutral-400">Ninguno todavía.</p>
+        ) : (
+          <div className="space-y-2">
+            {quotaHabits.map((h) => (
+              <div
+                key={h.id}
+                className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm dark:border-neutral-800 dark:bg-neutral-900"
+              >
+                <div className="flex items-center justify-between">
+                  <p>{h.name}</p>
+                  <HabitActions id={h.id} archived={false} paused={h.paused} />
+                </div>
+                <p className="mt-1 text-xs text-neutral-400">
+                  {h.paused ? "pausado" : `${h.done}/${h.quotaTarget} ${h.periodLabel}`}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-neutral-500">Crear hábito</h2>
+        <HabitForm mode="create" />
+      </section>
+
+      {archived.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-neutral-500">Archivados</h2>
+          <div className="space-y-2">
+            {archived.map((h) => (
+              <div
+                key={h.id}
+                className="flex items-center justify-between rounded-xl border border-dashed border-neutral-300 px-4 py-3 text-sm text-neutral-400 dark:border-neutral-700"
+              >
+                <p>{h.name}</p>
+                <HabitActions id={h.id} archived paused={false} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

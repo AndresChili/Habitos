@@ -1,60 +1,63 @@
-import { parseISO, format } from "date-fns";
-import { es } from "date-fns/locale";
-import { getTodayView, type TodayHabit } from "@/lib/habits";
+import { getFixedHabitsForDate, getSettingsTz } from "@/lib/habits";
+import { listTasksForDate } from "@/lib/tasks";
+import { getWeightForDate } from "@/lib/weight";
+import { dayKey, nowInTz } from "@/lib/dates";
 import HabitToggle from "@/components/HabitToggle";
+import TaskForm from "@/components/TaskForm";
+import TaskItem from "@/components/TaskItem";
+import WeightQuickInput from "@/components/WeightQuickInput";
+import DateNav from "@/components/DateNav";
 
 export const dynamic = "force-dynamic";
 
-function Section({
-  title,
-  items,
-  date,
-  emptyHint,
+export default async function TodayPage({
+  searchParams,
 }: {
-  title: string;
-  items: TodayHabit[];
-  date: string;
-  emptyHint: string;
+  searchParams: Promise<{ date?: string }>;
 }) {
-  return (
-    <section className="space-y-2">
-      <h2 className="text-sm font-medium text-neutral-500">{title}</h2>
-      {items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-neutral-300 px-4 py-3 text-sm text-neutral-400 dark:border-neutral-700">
-          {emptyHint}
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {items.map((h) => (
-            <HabitToggle
-              key={h.id}
-              habitId={h.id}
-              date={date}
-              name={h.name}
-              done={h.done}
-              streak={h.streak}
-            />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
+  const params = await searchParams;
+  const tz = await getSettingsTz();
+  const todayKey = dayKey(nowInTz(tz));
+  const date = params.date ?? todayKey;
 
-export default async function TodayPage() {
-  const view = await getTodayView();
-  const label = format(parseISO(view.date), "EEEE, d 'de' MMMM", { locale: es });
+  const [habits, tasks, weight] = await Promise.all([
+    getFixedHabitsForDate(date),
+    listTasksForDate(date),
+    date === todayKey ? getWeightForDate(date) : Promise.resolve(null),
+  ]);
 
   return (
     <div className="space-y-8">
-      <header className="space-y-1">
-        <p className="text-sm capitalize text-neutral-400">{label}</p>
-        <h1 className="text-2xl font-semibold">Hoy</h1>
-      </header>
+      <DateNav date={date} todayKey={todayKey} />
 
-      <Section title="Diarios" items={view.daily} date={view.date} emptyHint="Sin hábitos diarios todavía. Ve a Hábitos para crear el primero." />
-      <Section title="Semanales" items={view.weekly} date={view.date} emptyHint="Sin hábitos semanales todavía." />
-      <Section title="Mensuales" items={view.monthly} date={view.date} emptyHint="Sin hábitos mensuales todavía." />
+      {date === todayKey && <WeightQuickInput date={date} initialWeight={weight?.weightKg ?? null} />}
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-medium text-neutral-500">Hábitos</h2>
+        {habits.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-neutral-300 px-4 py-3 text-sm text-neutral-400 dark:border-neutral-700">
+            Sin hábitos programados este día.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {habits.map((h) => (
+              <HabitToggle key={h.id} habitId={h.id} date={date} name={h.name} done={h.done} streak={h.streak} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-medium text-neutral-500">Tareas</h2>
+        <TaskForm date={date} />
+        {tasks.length > 0 && (
+          <div className="space-y-2">
+            {tasks.map((t) => (
+              <TaskItem key={t.id} id={t.id} date={date} title={t.title} time={t.time} done={t.done} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

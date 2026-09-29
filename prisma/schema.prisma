@@ -7,25 +7,50 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Frequency {
-  DAILY
-  WEEKLY
-  MONTHLY
+enum RecurrenceType {
+  FIXED_DAYS
+  QUOTA
 }
 
-model Habit {
-  id        String     @id @default(cuid())
-  name      String
-  frequency Frequency
-  archived  Boolean    @default(false)
-  createdAt DateTime   @default(now())
-  logs      HabitLog[]
+enum QuotaPeriod {
+  WEEK
+  MONTH
+}
 
-  @@index([frequency, archived])
+// FIXED_DAYS habits are due on specific weekdays (1=Monday..7=Sunday, ISO) —
+// checked off from "Hoy". QUOTA habits just need N completions within the
+// period, any days; checked off from "Hábitos" since there's no single "due" day.
+model Habit {
+  id             String          @id @default(cuid())
+  name           String
+  recurrenceType RecurrenceType
+  weekdays       Int[]           @default([])
+  quotaPeriod    QuotaPeriod?
+  quotaTarget    Int?
+  archivedAt     DateTime?
+  createdAt      DateTime        @default(now())
+  logs           HabitLog[]
+  pauses         HabitPause[]
+
+  @@index([archivedAt])
+}
+
+// A habit can be paused/resumed repeatedly; each window is recorded so past
+// calendar days stay correctly marked "not scheduled" even after resuming.
+// toDate null = pause still active.
+model HabitPause {
+  id       String   @id @default(cuid())
+  habitId  String
+  habit    Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  fromDate String
+  toDate   String?
+
+  @@index([habitId])
 }
 
 // date is "YYYY-MM-DD" in the app timezone — avoids DST/UTC-boundary bugs,
-// since we only ever compare calendar days, not instants.
+// since we only ever compare calendar days, not instants. One row per
+// completion date regardless of habit type (FIXED_DAYS or QUOTA).
 model HabitLog {
   id        String   @id @default(cuid())
   habitId   String
@@ -37,13 +62,27 @@ model HabitLog {
   @@index([habitId])
 }
 
-// Singleton row (id always 1) holding slot caps and unlock-evaluation cursors.
+model Task {
+  id        String   @id @default(cuid())
+  date      String
+  title     String
+  time      String?
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([date])
+}
+
+// One entry per day, entered from "Hoy", surfaced with history/graph on "Peso".
+model WeightLog {
+  id        String   @id @default(cuid())
+  date      String   @unique
+  weightKg  Float
+  createdAt DateTime @default(now())
+}
+
+// Singleton row (id always 1).
 model Settings {
-  id                     Int      @id @default(1)
-  timezone               String   @default("Europe/Madrid")
-  dailyCap               Int      @default(3)
-  weeklyCap              Int      @default(2)
-  monthlyCap             Int      @default(6)
-  lastDailyUnlockWeek    String?
-  lastWeeklyUnlockMonth  String?
+  id       Int    @id @default(1)
+  timezone String @default("Europe/Madrid")
 }
