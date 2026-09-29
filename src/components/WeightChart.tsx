@@ -52,7 +52,7 @@ export default function WeightChart({ data }: { data: Point[] }) {
   const delta = filtered.length > 1 ? current - filtered[0].weightKg : 0;
 
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
+    <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-2xl font-semibold text-text">{current.toFixed(1)} kg</p>
@@ -69,7 +69,7 @@ export default function WeightChart({ data }: { data: Point[] }) {
               key={r.key}
               type="button"
               onClick={() => setRange(r.key)}
-              className={`rounded-md px-2 py-1 text-xs transition ${
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all active:scale-95 ${
                 range === r.key ? "bg-accent-soft text-accent-strong" : "text-text-faint hover:text-text-muted"
               }`}
             >

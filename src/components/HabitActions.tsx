@@ -9,6 +9,8 @@ import {
   resumeHabitAction,
 } from "@/app/actions";
 
+const pill = "rounded-lg px-2 py-1 text-xs font-medium transition-all active:scale-95";
+
 export default function HabitActions({
   id,
   archived,
@@ -26,7 +28,7 @@ export default function HabitActions({
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => restoreHabitAction(id))}
-        className="text-xs text-text-faint transition hover:text-text-muted disabled:opacity-50"
+        className={`${pill} text-text-faint hover:bg-surface-muted hover:text-text-muted disabled:opacity-50`}
       >
         Restaurar
       </button>
@@ -34,18 +36,18 @@ export default function HabitActions({
   }
 
   return (
-    <div className="flex items-center gap-3 text-xs text-text-faint">
-      <Link href={`/habitos/${id}`} className="transition hover:text-accent">
+    <div className="flex items-center gap-1 text-text-faint">
+      <Link href={`/habitos/${id}`} className={`${pill} hover:bg-accent-soft hover:text-accent-strong`}>
         Progreso
       </Link>
-      <Link href={`/habitos/${id}/editar`} className="transition hover:text-text-muted">
+      <Link href={`/habitos/${id}/editar`} className={`${pill} hover:bg-surface-muted hover:text-text-muted`}>
         Editar
       </Link>
       <button
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => (paused ? resumeHabitAction(id) : pauseHabitAction(id)))}
-        className="transition hover:text-text-muted disabled:opacity-50"
+        className={`${pill} hover:bg-surface-muted hover:text-text-muted disabled:opacity-50`}
       >
         {paused ? "Reanudar" : "Pausar"}
       </button>
@@ -53,7 +55,7 @@ export default function HabitActions({
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => archiveHabitAction(id))}
-        className="transition hover:text-danger disabled:opacity-50"
+        className={`${pill} hover:bg-danger/10 hover:text-danger disabled:opacity-50`}
       >
         Eliminar
       </button>

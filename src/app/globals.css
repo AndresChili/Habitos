@@ -58,8 +58,21 @@
 body {
   background: var(--bg);
   color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
 * {
   border-color: var(--border);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
 }

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { deleteTaskAction, toggleTaskAction, updateTaskAction } from "@/app/actions";
+import { IconCheck, IconTrash } from "@/components/icons";
 
 export default function TaskItem({
   id,
@@ -31,7 +32,7 @@ export default function TaskItem({
             setEditing(false);
           });
         }}
-        className="flex items-center gap-2 rounded-xl border border-accent/40 bg-surface px-3 py-2"
+        className="flex items-center gap-2 rounded-2xl border border-accent/40 bg-surface px-3 py-2.5 shadow-sm shadow-black/[0.03]"
       >
         <input
           value={editTitle}
@@ -45,7 +46,7 @@ export default function TaskItem({
           onChange={(e) => setEditTime(e.target.value)}
           className="w-24 shrink-0 bg-transparent text-xs text-text-muted outline-none"
         />
-        <button type="submit" disabled={pending} className="shrink-0 text-xs font-medium text-accent">
+        <button type="submit" disabled={pending} className="shrink-0 rounded-lg bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong transition active:scale-95">
           Guardar
         </button>
         <button type="button" onClick={() => setEditing(false)} className="shrink-0 text-xs text-text-faint">
@@ -57,7 +58,7 @@ export default function TaskItem({
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm transition ${
+      className={`flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-sm shadow-sm shadow-black/[0.03] transition-colors ${
         done ? "border-border bg-surface-muted text-text-faint" : "border-border bg-surface text-text"
       }`}
     >
@@ -65,27 +66,27 @@ export default function TaskItem({
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => toggleTaskAction(id))}
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs transition ${
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all active:scale-90 ${
           done ? "border-text-faint bg-text-faint text-surface" : "border-border"
         }`}
       >
-        {done && "✓"}
+        {done && <IconCheck />}
       </button>
 
-      <button type="button" onClick={() => setEditing(true)} className={`min-w-0 flex-1 truncate text-left ${done ? "line-through" : ""}`}>
+      <button type="button" onClick={() => setEditing(true)} className={`min-w-0 flex-1 truncate text-left font-medium ${done ? "line-through" : ""}`}>
         {title}
       </button>
 
-      {time && <span className="shrink-0 text-xs text-text-faint">{time}</span>}
+      {time && <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-faint">{time}</span>}
 
       <button
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => deleteTaskAction(id))}
-        className="shrink-0 text-text-faint transition hover:text-danger disabled:opacity-50"
+        className="shrink-0 text-text-faint transition-all hover:text-danger active:scale-90 disabled:opacity-50"
         aria-label="Eliminar tarea"
       >
-        ×
+        <IconTrash />
       </button>
     </div>
   );

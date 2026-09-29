@@ -27,9 +27,14 @@ export default function WeightQuickInput({
   }
 
   return (
-    <form onSubmit={submit} className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
-      <IconWeight className="h-4 w-4 shrink-0 text-text-faint" />
-      <span className="shrink-0 text-sm text-text-muted">Peso de hoy</span>
+    <form
+      onSubmit={submit}
+      className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-sm shadow-black/[0.03] focus-within:border-accent"
+    >
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-strong">
+        <IconWeight className="h-4 w-4" />
+      </span>
+      <span className="shrink-0 text-sm font-medium text-text-muted">Peso de hoy</span>
       <input
         inputMode="decimal"
         value={value}
@@ -38,13 +43,13 @@ export default function WeightQuickInput({
           setSaved(false);
         }}
         placeholder="72.4"
-        className="w-16 rounded-lg border border-border bg-surface px-2 py-1 text-sm text-text outline-none transition focus:border-accent"
+        className="w-16 border-0 border-b border-border bg-transparent py-0.5 text-right text-sm text-text outline-none focus:border-accent"
       />
       <span className="shrink-0 text-sm text-text-faint">kg</span>
       <button
         type="submit"
         disabled={pending || !value.trim()}
-        className="ml-auto shrink-0 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-on disabled:opacity-50"
+        className="ml-auto shrink-0 rounded-xl bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-on transition-all active:scale-95 disabled:opacity-50"
       >
         {saved ? "Guardado" : "Guardar"}
       </button>

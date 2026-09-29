@@ -10,8 +10,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   if (isLogin) return <>{children}</>;
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <div className="mx-auto w-full max-w-md flex-1 px-4 pb-4 pt-6">{children}</div>
+    <div className="min-h-dvh">
+      <div className="mx-auto w-full max-w-md px-4 pb-28 pt-8">{children}</div>
       <Nav />
     </div>
   );

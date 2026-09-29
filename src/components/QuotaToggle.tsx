@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { toggleQuotaLogAction } from "@/app/actions";
+import { IconCheck } from "@/components/icons";
 
 export default function QuotaToggle({
   habitId,
@@ -20,7 +21,7 @@ export default function QuotaToggle({
 
   if (paused) {
     return (
-      <div className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-surface px-4 py-3 text-left text-sm text-text-faint">
+      <div className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-border bg-surface px-4 py-3.5 text-left text-sm text-text-faint">
         <span className="min-w-0 flex-1 truncate">{name}</span>
         <span className="shrink-0 text-xs">pausado</span>
       </div>
@@ -32,19 +33,23 @@ export default function QuotaToggle({
       type="button"
       disabled={pending}
       onClick={() => startTransition(() => toggleQuotaLogAction(habitId))}
-      className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition disabled:opacity-60 ${
-        done ? "border-accent/30 bg-accent-soft text-text" : "border-border bg-surface text-text hover:border-text-faint"
+      className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3.5 text-left text-sm shadow-sm shadow-black/[0.03] transition-all active:scale-[0.98] disabled:opacity-60 ${
+        done
+          ? "border-accent/25 bg-accent-soft text-text"
+          : "border-border bg-surface text-text hover:border-text-faint/60"
       }`}
     >
       <span
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs transition ${
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
           done ? "border-accent bg-accent text-accent-on" : "border-border"
         }`}
       >
-        {done && "✓"}
+        {done && <IconCheck />}
       </span>
-      <span className="min-w-0 flex-1 truncate">{name}</span>
-      <span className="shrink-0 text-xs text-text-faint">{periodLabel}</span>
+      <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
+      <span className="shrink-0 rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-text-muted">
+        {periodLabel}
+      </span>
     </button>
   );
 }

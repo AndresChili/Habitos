@@ -18,21 +18,24 @@ export default async function HabitosPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold text-text">Hábitos</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-text">Hábitos</h1>
         <p className="text-sm text-text-muted">Gestiona tus hábitos y su recurrencia.</p>
       </header>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-text-muted">Días concretos</h2>
+      <section className="space-y-2.5">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Días concretos</h2>
         {fixed.length === 0 ? (
           <p className="text-sm text-text-faint">Ninguno todavía.</p>
         ) : (
           <div className="space-y-2">
             {fixed.map((h) => (
-              <div key={h.id} className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm">
+              <div
+                key={h.id}
+                className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-sm shadow-black/[0.03]"
+              >
                 <div>
-                  <p className="text-text">{h.name}</p>
-                  <p className="text-xs text-text-faint">
+                  <p className="font-medium text-text">{h.name}</p>
+                  <p className="mt-0.5 text-xs text-text-faint">
                     {h.weekdays.length === 7 ? "Diario" : h.weekdays.map((d) => WEEKDAY_LABELS[d - 1]).join(" ")}
                     {isCurrentlyPaused(h.pauses) && " · pausado"}
                   </p>
@@ -44,14 +47,14 @@ export default async function HabitosPage() {
         )}
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-text-muted">Semanal / mensual</h2>
+      <section className="space-y-2.5">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Semanal / mensual</h2>
         {quotaHabits.length === 0 ? (
           <p className="text-sm text-text-faint">Ninguno todavía.</p>
         ) : (
           <div className="space-y-2">
             {quotaHabits.map((h) => (
-              <div key={h.id} className="space-y-1">
+              <div key={h.id} className="space-y-1.5">
                 <QuotaToggle
                   habitId={h.id}
                   name={h.name}
@@ -68,17 +71,20 @@ export default async function HabitosPage() {
         )}
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-text-muted">Crear hábito</h2>
+      <section className="space-y-2.5">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Crear hábito</h2>
         <HabitForm mode="create" />
       </section>
 
       {archived.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium text-text-muted">Archivados</h2>
+        <section className="space-y-2.5">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Archivados</h2>
           <div className="space-y-2">
             {archived.map((h) => (
-              <div key={h.id} className="flex items-center justify-between rounded-xl border border-dashed border-border px-4 py-3 text-sm text-text-faint">
+              <div
+                key={h.id}
+                className="flex items-center justify-between rounded-2xl border border-dashed border-border px-4 py-3.5 text-sm text-text-faint"
+              >
                 <p>{h.name}</p>
                 <HabitActions id={h.id} archived paused={false} />
               </div>
