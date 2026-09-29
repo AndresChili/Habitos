@@ -68,3 +68,22 @@ export function IconTrash({ className = "h-4 w-4" }: IconProps) {
     </svg>
   );
 }
+
+export function IconGym({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={className}>
+      <path d="M4 10v4M2.5 11v2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M20 10v4M21.5 11v2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 8v8M17 8v8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7 12h10" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconChevronRight({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={className}>
+      <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

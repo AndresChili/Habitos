@@ -2,6 +2,7 @@ import { getQuotaHabits, getSettingsTz, isCurrentlyPaused, listHabits } from "@/
 import HabitForm from "@/components/HabitForm";
 import HabitActions from "@/components/HabitActions";
 import QuotaToggle from "@/components/QuotaToggle";
+import HabitosTabs from "@/components/HabitosTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,8 @@ export default async function HabitosPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-text">Hábitos</h1>
         <p className="text-sm text-text-muted">Gestiona tus hábitos y su recurrencia.</p>
       </header>
+
+      <HabitosTabs active="gestionar" />
 
       <section className="space-y-2.5">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Días concretos</h2>
