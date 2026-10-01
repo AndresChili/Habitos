@@ -8,8 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "dotenv -e .env.local -- prisma generate",
-    "db:push": "dotenv -e .env.local -- prisma db push",
-    "db:seed": "dotenv -e .env.local -- tsx prisma/seed.ts"
+    "db:push": "dotenv -e .env.local -- prisma db push"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

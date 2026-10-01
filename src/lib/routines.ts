@@ -105,7 +105,7 @@ export async function addExerciseToRoutine(
   const userId = await requireUserId();
   const [routine, exercise] = await Promise.all([
     prisma.routine.findFirst({ where: { id: routineId, userId } }),
-    prisma.exercise.findFirst({ where: { id: exerciseId, OR: [{ userId: null }, { userId }] } }),
+    prisma.exercise.findFirst({ where: { id: exerciseId, userId } }),
   ]);
   if (!routine) return { ok: false, error: "Rutina no encontrada." };
   if (!exercise) return { ok: false, error: "Ejercicio no encontrado." };

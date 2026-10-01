@@ -174,7 +174,7 @@ function estimateOneRm(weightKg: number, reps: number): number | null {
 
 export async function computeExercisePRs(exerciseId: string): Promise<ExercisePRs | null> {
   const userId = await requireUserId();
-  const exercise = await prisma.exercise.findFirst({ where: { id: exerciseId, OR: [{ userId: null }, { userId }] } });
+  const exercise = await prisma.exercise.findFirst({ where: { id: exerciseId, userId } });
   if (!exercise) return null;
 
   const entries = await prisma.workoutExercise.findMany({

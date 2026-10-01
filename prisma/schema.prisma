@@ -180,15 +180,14 @@ enum WorkoutStatus {
   COMPLETED
 }
 
-// userId null = global/seeded exercise, visible to everyone. userId set = a
-// user's own custom exercise (different gyms have different machines).
+// Every exercise is created by a user — no predefined/global library.
 // Exercises are only ever archived, never hard-deleted — RoutineExercise and
 // WorkoutExercise both reference Exercise with onDelete: Restrict as a
 // safety net, so historical sets can never be orphaned by a deletion.
 model Exercise {
   id               String        @id @default(cuid())
-  userId           String?
-  user             User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   name             String
   primaryMuscle    MuscleGroup
   secondaryMuscles MuscleGroup[] @default([])

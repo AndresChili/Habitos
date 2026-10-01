@@ -11,21 +11,17 @@ export type ExerciseInput = {
   instructions?: string | null;
 };
 
-// Visible to a user: global (seeded, userId null) + their own custom ones.
 export async function listExercises(includeArchived = false) {
   const userId = await requireUserId();
   return prisma.exercise.findMany({
-    where: {
-      OR: [{ userId: null }, { userId }],
-      ...(includeArchived ? {} : { archivedAt: null }),
-    },
+    where: { userId, ...(includeArchived ? {} : { archivedAt: null }) },
     orderBy: [{ primaryMuscle: "asc" }, { name: "asc" }],
   });
 }
 
 export async function getExercise(id: string) {
   const userId = await requireUserId();
-  return prisma.exercise.findFirst({ where: { id, OR: [{ userId: null }, { userId }] } });
+  return prisma.exercise.findFirst({ where: { id, userId } });
 }
 
 export async function createExercise(
@@ -48,9 +44,8 @@ export async function createExercise(
   return { ok: true, id: exercise.id };
 }
 
-// Only the user's own custom exercises can be archived — global ones (userId
-// null) are excluded by this filter automatically, never hard-deleted either
-// way, so WorkoutExercise/RoutineExercise rows referencing them stay valid.
+// Archived, never hard-deleted — so WorkoutExercise/RoutineExercise rows
+// referencing it stay valid (see Exercise model comment in schema.prisma).
 export async function archiveExercise(id: string) {
   const userId = await requireUserId();
   await prisma.exercise.updateMany({ where: { id, userId }, data: { archivedAt: new Date() } });
