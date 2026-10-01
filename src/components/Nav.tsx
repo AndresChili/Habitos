@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/app/actions";
-import { IconGym, IconHabits, IconLogout, IconToday, IconWeight } from "@/components/icons";
+import { IconGym, IconHabits, IconLogout, IconToday, IconUser, IconWeight } from "@/components/icons";
 
 const links = [
   { href: "/", label: "Hoy", icon: IconToday },
   { href: "/habitos", label: "Hábitos", icon: IconHabits },
   { href: "/peso", label: "Peso", icon: IconWeight },
   { href: "/gimnasio", label: "Gimnasio", icon: IconGym },
+  { href: "/cuenta", label: "Cuenta", icon: IconUser },
 ];
 
 export default function Nav() {

@@ -1,6 +1,12 @@
+import Link from "next/link";
 import { loginAction } from "@/app/actions";
 import InstallButton from "@/components/InstallButton";
 import { IconHabits } from "@/components/icons";
+
+const ERRORS: Record<string, string> = {
+  "1": "Email o contraseña incorrectos.",
+  rate: "Demasiados intentos. Prueba de nuevo en unos minutos.",
+};
 
 export default async function LoginPage({
   searchParams,
@@ -9,6 +15,7 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const next = params.next ?? "/";
+  const errorMessage = params.error ? ERRORS[params.error] ?? ERRORS["1"] : undefined;
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-bg px-6">
@@ -22,21 +29,32 @@ export default async function LoginPage({
               <IconHabits className="h-6 w-6" />
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-text">Hábitos</h1>
-            <p className="text-sm text-text-muted">Introduce tu código para entrar</p>
+            <p className="text-sm text-text-muted">Inicia sesión para continuar</p>
           </div>
 
           <input type="hidden" name="next" value={next} />
-          <input
-            type="password"
-            inputMode="numeric"
-            name="passcode"
-            autoFocus
-            required
-            placeholder="••••••"
-            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-center text-lg tracking-widest text-text outline-none transition-colors focus:border-accent"
-          />
 
-          {params.error && <p className="text-center text-sm text-danger">Código incorrecto.</p>}
+          <div className="space-y-3">
+            <input
+              type="email"
+              name="email"
+              autoComplete="email"
+              autoFocus
+              required
+              placeholder="Email"
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text outline-none transition-colors focus:border-accent"
+            />
+            <input
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              required
+              placeholder="Contraseña"
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text outline-none transition-colors focus:border-accent"
+            />
+          </div>
+
+          {errorMessage && <p className="text-center text-sm text-danger">{errorMessage}</p>}
 
           <button
             type="submit"
@@ -44,6 +62,13 @@ export default async function LoginPage({
           >
             Entrar
           </button>
+
+          <p className="text-center text-sm text-text-faint">
+            ¿No tienes cuenta?{" "}
+            <Link href="/register" className="font-medium text-accent hover:text-accent-strong">
+              Crea una
+            </Link>
+          </p>
         </form>
 
         <InstallButton />

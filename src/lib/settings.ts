@@ -1,10 +1,11 @@
+import "server-only";
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/dal";
 import type { Settings } from "@/generated/prisma/client";
 
-const SETTINGS_ID = 1;
-
 export async function getSettings(): Promise<Settings> {
-  const existing = await prisma.settings.findUnique({ where: { id: SETTINGS_ID } });
+  const userId = await requireUserId();
+  const existing = await prisma.settings.findUnique({ where: { userId } });
   if (existing) return existing;
-  return prisma.settings.create({ data: { id: SETTINGS_ID } });
+  return prisma.settings.create({ data: { userId } });
 }

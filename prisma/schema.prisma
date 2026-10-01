@@ -17,11 +17,41 @@ enum QuotaPeriod {
   MONTH
 }
 
+// One account per person. All other data hangs off userId so every query can
+// be scoped to "only what this user owns" — see src/lib/dal.ts.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  habits     Habit[]
+  habitLogs  HabitLog[]
+  pauses     HabitPause[]
+  tasks      Task[]
+  weightLogs WeightLog[]
+  settings   Settings?
+}
+
+// Failed/succeeded login & signup attempts, keyed by the submitted email —
+// not a FK to User, so we can rate-limit attempts against emails that don't
+// exist yet without leaking that distinction via timing or errors.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+}
+
 // FIXED_DAYS habits are due on specific weekdays (1=Monday..7=Sunday, ISO) —
 // checked off from "Hoy". QUOTA habits just need N completions within the
 // period, any days; checked off from "Hábitos" since there's no single "due" day.
 model Habit {
   id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   name           String
   recurrenceType RecurrenceType
   weekdays       Int[]           @default([])
@@ -32,57 +62,74 @@ model Habit {
   logs           HabitLog[]
   pauses         HabitPause[]
 
-  @@index([archivedAt])
+  @@index([userId, archivedAt])
 }
 
 // A habit can be paused/resumed repeatedly; each window is recorded so past
 // calendar days stay correctly marked "not scheduled" even after resuming.
-// toDate null = pause still active.
+// toDate null = pause still active. userId is denormalized from Habit so
+// every query can filter by owner directly, without a join, as a second
+// line of defense against cross-user access.
 model HabitPause {
   id       String   @id @default(cuid())
   habitId  String
   habit    Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   fromDate String
   toDate   String?
 
   @@index([habitId])
+  @@index([userId])
 }
 
 // date is "YYYY-MM-DD" in the app timezone — avoids DST/UTC-boundary bugs,
 // since we only ever compare calendar days, not instants. One row per
-// completion date regardless of habit type (FIXED_DAYS or QUOTA).
+// completion date regardless of habit type (FIXED_DAYS or QUOTA). userId is
+// denormalized from Habit, same reasoning as HabitPause.
 model HabitLog {
   id        String   @id @default(cuid())
   habitId   String
   habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date      String
   createdAt DateTime @default(now())
 
   @@unique([habitId, date])
   @@index([habitId])
+  @@index([userId])
 }
 
 model Task {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date      String
   title     String
   time      String?
   done      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  @@index([date])
+  @@index([userId, date])
 }
 
 // One entry per day, entered from "Hoy", surfaced with history/graph on "Peso".
 model WeightLog {
   id        String   @id @default(cuid())
-  date      String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String
   weightKg  Float
   createdAt DateTime @default(now())
+
+  @@unique([userId, date])
 }
 
-// Singleton row (id always 1).
+// One row per user.
 model Settings {
-  id       Int    @id @default(1)
+  id       String @id @default(cuid())
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   timezone String @default("Europe/Madrid")
 }

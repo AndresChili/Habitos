@@ -5,9 +5,9 @@ import Nav from "@/components/Nav";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLogin = pathname === "/login";
+  const isAuthPage = pathname === "/login" || pathname === "/register";
 
-  if (isLogin) return <>{children}</>;
+  if (isAuthPage) return <>{children}</>;
 
   return (
     <div className="min-h-dvh">

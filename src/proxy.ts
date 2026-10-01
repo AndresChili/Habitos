@@ -4,12 +4,18 @@ import { SESSION_COOKIE } from "@/lib/auth";
 
 function isValidToken(token: string | undefined, secret: string): boolean {
   if (!token) return false;
-  const [payload, sig] = token.split(".");
-  if (!payload || !sig) return false;
-  const expected = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+  const [encodedPayload, sig] = token.split(".");
+  if (!encodedPayload || !sig) return false;
+  const expected = crypto.createHmac("sha256", secret).update(encodedPayload).digest("hex");
   if (expected.length !== sig.length) return false;
   if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig))) return false;
-  return Number(payload) > Date.now();
+
+  try {
+    const payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
+    return typeof payload?.exp === "number" && payload.exp > Date.now();
+  } catch {
+    return false;
+  }
 }
 
 export function proxy(req: NextRequest) {
@@ -26,6 +32,6 @@ export function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!login|manifest.webmanifest|icon-192.png|icon-512.png|apple-icon.png|favicon.ico|_next/static|_next/image).*)",
+    "/((?!login|register|manifest.webmanifest|icon-192.png|icon-512.png|apple-icon.png|favicon.ico|_next/static|_next/image).*)",
   ],
 };

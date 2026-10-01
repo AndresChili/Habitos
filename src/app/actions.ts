@@ -2,7 +2,19 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createSession, destroySession, verifyPasscode } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import {
+  createSession,
+  destroySession,
+  hashPassword,
+  isValidEmail,
+  isValidPassword,
+  normalizeEmail,
+  verifyPassword,
+  verifyPasswordOrDummy,
+} from "@/lib/auth";
+import { requireUserId } from "@/lib/dal";
+import { isRateLimited, recordLoginAttempt } from "@/lib/rateLimit";
 import {
   archiveHabit,
   createHabit,
@@ -20,20 +32,88 @@ import { setWeight } from "@/lib/weight";
 import { dayKey, nowInTz } from "@/lib/dates";
 
 export async function loginAction(formData: FormData) {
-  const passcode = String(formData.get("passcode") ?? "");
+  const email = normalizeEmail(String(formData.get("email") ?? ""));
+  const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "/");
+  const qs = `next=${encodeURIComponent(next)}`;
 
-  if (!verifyPasscode(passcode)) {
-    redirect(`/login?error=1&next=${encodeURIComponent(next)}`);
+  if (!email || !password) {
+    redirect(`/login?error=1&${qs}`);
   }
 
-  await createSession();
+  if (await isRateLimited(email)) {
+    redirect(`/login?error=rate&${qs}`);
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  // Always runs bcrypt, matched or not, so response time doesn't reveal
+  // whether the email is registered.
+  const valid = await verifyPasswordOrDummy(password, user?.passwordHash);
+  await recordLoginAttempt(email, valid);
+
+  if (!user || !valid) {
+    redirect(`/login?error=1&${qs}`);
+  }
+
+  await createSession(user.id);
   redirect(next || "/");
+}
+
+export async function registerAction(formData: FormData) {
+  const email = normalizeEmail(String(formData.get("email") ?? ""));
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+
+  if (!isValidEmail(email)) {
+    redirect("/register?error=email");
+  }
+  if (!isValidPassword(password)) {
+    redirect("/register?error=weak");
+  }
+  if (password !== confirm) {
+    redirect("/register?error=match");
+  }
+  if (await isRateLimited(email)) {
+    redirect("/register?error=rate");
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    await recordLoginAttempt(email, false);
+    redirect("/register?error=exists");
+  }
+
+  const passwordHash = await hashPassword(password);
+  const user = await prisma.user.create({ data: { email, passwordHash } });
+  await recordLoginAttempt(email, true);
+  await prisma.settings.create({ data: { userId: user.id } });
+
+  await createSession(user.id);
+  redirect("/");
 }
 
 export async function logoutAction() {
   await destroySession();
   redirect("/login");
+}
+
+export async function changePasswordAction(formData: FormData) {
+  const userId = await requireUserId();
+  const currentPassword = String(formData.get("currentPassword") ?? "");
+  const newPassword = String(formData.get("newPassword") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) redirect("/login");
+
+  const valid = await verifyPassword(currentPassword, user.passwordHash);
+  if (!valid) redirect("/cuenta?error=current");
+  if (!isValidPassword(newPassword)) redirect("/cuenta?error=weak");
+  if (newPassword !== confirm) redirect("/cuenta?error=match");
+
+  const passwordHash = await hashPassword(newPassword);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  redirect("/cuenta?ok=1");
 }
 
 async function todayKey(): Promise<string> {

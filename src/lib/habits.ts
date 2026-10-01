@@ -1,4 +1,6 @@
+import "server-only";
 import { prisma } from "@/lib/db";
+import { requireUserId } from "@/lib/dal";
 import { getSettings } from "@/lib/settings";
 import { dayKey, isoWeekday, monthRange, nowInTz, parseDayKey, weekRange } from "@/lib/dates";
 import {
@@ -45,20 +47,23 @@ function validateRecurrence(input: HabitInput): ValidatedFields {
 }
 
 export async function listHabits(includeArchived = false): Promise<(Habit & { pauses: HabitPause[] })[]> {
+  const userId = await requireUserId();
   return prisma.habit.findMany({
-    where: includeArchived ? undefined : { archivedAt: null },
+    where: includeArchived ? { userId } : { userId, archivedAt: null },
     include: { pauses: true },
     orderBy: { createdAt: "asc" },
   });
 }
 
 export async function getHabit(id: string) {
-  return prisma.habit.findUnique({ where: { id }, include: { pauses: true } });
+  const userId = await requireUserId();
+  return prisma.habit.findFirst({ where: { id, userId }, include: { pauses: true } });
 }
 
 export async function createHabit(
   input: HabitInput
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  const userId = await requireUserId();
   const name = input.name.trim();
   if (!name) return { ok: false, error: "El nombre no puede estar vacío." };
 
@@ -67,6 +72,7 @@ export async function createHabit(
 
   await prisma.habit.create({
     data: {
+      userId,
       name,
       recurrenceType: input.recurrenceType,
       weekdays: fields.weekdays,
@@ -81,14 +87,15 @@ export async function updateHabit(
   id: string,
   input: HabitInput
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  const userId = await requireUserId();
   const name = input.name.trim();
   if (!name) return { ok: false, error: "El nombre no puede estar vacío." };
 
   const fields = validateRecurrence(input);
   if (!fields.ok) return fields;
 
-  await prisma.habit.update({
-    where: { id },
+  await prisma.habit.updateMany({
+    where: { id, userId },
     data: {
       name,
       recurrenceType: input.recurrenceType,
@@ -101,20 +108,30 @@ export async function updateHabit(
 }
 
 export async function archiveHabit(id: string) {
-  await prisma.habit.update({ where: { id }, data: { archivedAt: new Date() } });
+  const userId = await requireUserId();
+  await prisma.habit.updateMany({ where: { id, userId }, data: { archivedAt: new Date() } });
 }
 
 export async function restoreHabit(id: string) {
-  await prisma.habit.update({ where: { id }, data: { archivedAt: null } });
+  const userId = await requireUserId();
+  await prisma.habit.updateMany({ where: { id, userId }, data: { archivedAt: null } });
 }
 
 export async function pauseHabit(id: string, dateKeyToday: string) {
+  const userId = await requireUserId();
+  const habit = await prisma.habit.findFirst({ where: { id, userId } });
+  if (!habit) return;
+
   const open = await prisma.habitPause.findFirst({ where: { habitId: id, toDate: null } });
   if (open) return;
-  await prisma.habitPause.create({ data: { habitId: id, fromDate: dateKeyToday } });
+  await prisma.habitPause.create({ data: { habitId: id, userId, fromDate: dateKeyToday } });
 }
 
 export async function resumeHabit(id: string, dateKeyToday: string) {
+  const userId = await requireUserId();
+  const habit = await prisma.habit.findFirst({ where: { id, userId } });
+  if (!habit) return;
+
   const open = await prisma.habitPause.findFirst({ where: { habitId: id, toDate: null } });
   if (!open) return;
   await prisma.habitPause.update({ where: { id: open.id }, data: { toDate: dateKeyToday } });
@@ -129,12 +146,16 @@ export function isCurrentlyPaused(pauses: HabitPause[]): boolean {
 }
 
 export async function toggleLog(habitId: string, date: string) {
-  const existing = await prisma.habitLog.findUnique({ where: { habitId_date: { habitId, date } } });
+  const userId = await requireUserId();
+  const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
+  if (!habit) return false;
+
+  const existing = await prisma.habitLog.findFirst({ where: { habitId, userId, date } });
   if (existing) {
     await prisma.habitLog.delete({ where: { id: existing.id } });
     return false;
   }
-  await prisma.habitLog.create({ data: { habitId, date } });
+  await prisma.habitLog.create({ data: { habitId, userId, date } });
   return true;
 }
 
@@ -178,9 +199,11 @@ export type TodayHabit = {
 
 // FIXED_DAYS habits due on `dateKeyValue`, for the "Hoy" screen.
 export async function getFixedHabitsForDate(dateKeyValue: string): Promise<TodayHabit[]> {
+  const userId = await requireUserId();
   const weekday = isoWeekday(parseDayKey(dateKeyValue));
   const habits = await prisma.habit.findMany({
     where: {
+      userId,
       recurrenceType: "FIXED_DAYS",
       archivedAt: null,
       createdAt: { lte: addDays(parseDayKey(dateKeyValue), 1) },
@@ -194,7 +217,7 @@ export async function getFixedHabitsForDate(dateKeyValue: string): Promise<Today
   if (due.length === 0) return [];
 
   const logs = await prisma.habitLog.findMany({
-    where: { habitId: { in: due.map((h) => h.id) }, date: { lte: dateKeyValue } },
+    where: { userId, habitId: { in: due.map((h) => h.id) }, date: { lte: dateKeyValue } },
     select: { habitId: true, date: true },
   });
 
@@ -227,16 +250,17 @@ export type QuotaHabit = {
 
 // QUOTA habits with current-period progress, for the "Hábitos" screen.
 export async function getQuotaHabits(tz: string): Promise<QuotaHabit[]> {
+  const userId = await requireUserId();
   const now = nowInTz(tz);
   const habits = await prisma.habit.findMany({
-    where: { recurrenceType: "QUOTA", archivedAt: null },
+    where: { userId, recurrenceType: "QUOTA", archivedAt: null },
     include: { pauses: true },
     orderBy: { createdAt: "asc" },
   });
   if (habits.length === 0) return [];
 
   const logs = await prisma.habitLog.findMany({
-    where: { habitId: { in: habits.map((h) => h.id) } },
+    where: { userId, habitId: { in: habits.map((h) => h.id) } },
     select: { habitId: true, date: true },
   });
   const byHabit = new Map<string, string[]>();
@@ -266,20 +290,21 @@ export async function getQuotaHabits(tz: string): Promise<QuotaHabit[]> {
 // clicking "done" logs today, clicking again removes whichever log exists
 // in the period (there should only ever be one, since target is always 1).
 export async function toggleQuotaLog(habitId: string, tz: string): Promise<boolean> {
-  const habit = await prisma.habit.findUnique({ where: { id: habitId } });
+  const userId = await requireUserId();
+  const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
   if (!habit || habit.recurrenceType !== "QUOTA") return false;
 
   const now = nowInTz(tz);
   const { start, end } = habit.quotaPeriod === "WEEK" ? weekRange(now) : monthRange(now);
   const existing = await prisma.habitLog.findFirst({
-    where: { habitId, date: { gte: dayKey(start), lte: dayKey(end) } },
+    where: { habitId, userId, date: { gte: dayKey(start), lte: dayKey(end) } },
   });
 
   if (existing) {
     await prisma.habitLog.delete({ where: { id: existing.id } });
     return false;
   }
-  await prisma.habitLog.create({ data: { habitId, date: dayKey(now) } });
+  await prisma.habitLog.create({ data: { habitId, userId, date: dayKey(now) } });
   return true;
 }
 
@@ -324,12 +349,13 @@ const HEATMAP_WEEKS = 18;
 const COMPARE_WINDOW_DAYS = 42;
 
 export async function getHabitDetail(id: string, tz: string): Promise<HabitDetail | null> {
-  const habit = await prisma.habit.findUnique({ where: { id }, include: { pauses: true } });
+  const userId = await requireUserId();
+  const habit = await prisma.habit.findFirst({ where: { id, userId }, include: { pauses: true } });
   if (!habit) return null;
 
   const now = nowInTz(tz);
   const todayK = dayKey(now);
-  const logs = await prisma.habitLog.findMany({ where: { habitId: id }, select: { date: true } });
+  const logs = await prisma.habitLog.findMany({ where: { habitId: id, userId }, select: { date: true } });
   const loggedDates = new Set(logs.map((l) => l.date));
 
   if (habit.recurrenceType === "FIXED_DAYS") {
