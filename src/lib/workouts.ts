@@ -1,6 +1,9 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal";
+import { getSettings } from "@/lib/settings";
+import { getRoutineForWeekday } from "@/lib/routines";
+import { dayKey, isoWeekday, nowInTz } from "@/lib/dates";
 import type { SetType } from "@/generated/prisma/client";
 
 // ---- Sessions ----
@@ -25,11 +28,13 @@ export async function startOrResumeSession(
   });
   if (!routine) return { ok: false, error: "Rutina no encontrada." };
 
+  const settings = await getSettings();
   const session = await prisma.workoutSession.create({
     data: {
       userId,
       routineId: routine.id,
       routineName: routine.name,
+      dateKey: dayKey(nowInTz(settings.timezone)),
       exercises: {
         create: routine.exercises.map((re) => ({
           userId,
@@ -40,6 +45,70 @@ export async function startOrResumeSession(
     },
   });
   return { ok: true, id: session.id };
+}
+
+// ---- "Hoy" integration ----
+
+export type TodayGymStatus =
+  | { scheduled: false }
+  | { scheduled: true; routine: null }
+  | { scheduled: true; routine: { id: string; name: string }; sessionStatus: "NONE" | "IN_PROGRESS" | "COMPLETED"; sessionId: string | null };
+
+export async function getTodayGymStatus(): Promise<TodayGymStatus> {
+  const settings = await getSettings();
+  const today = nowInTz(settings.timezone);
+  const todayWeekday = isoWeekday(today);
+  if (!settings.gymWeekdays.includes(todayWeekday)) return { scheduled: false };
+
+  const routine = await getRoutineForWeekday(todayWeekday);
+  if (!routine) return { scheduled: true, routine: null };
+
+  const userId = await requireUserId();
+  const session = await prisma.workoutSession.findFirst({
+    where: { userId, routineId: routine.id, dateKey: dayKey(today) },
+    orderBy: { startedAt: "desc" },
+  });
+
+  return {
+    scheduled: true,
+    routine: { id: routine.id, name: routine.name },
+    sessionStatus: session ? session.status : "NONE",
+    sessionId: session?.id ?? null,
+  };
+}
+
+// ---- Session-only exercise changes (never touch the Routine template) ----
+
+export async function addExerciseToSession(
+  sessionId: string,
+  exerciseId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const userId = await requireUserId();
+  const [session, exercise] = await Promise.all([
+    prisma.workoutSession.findFirst({ where: { id: sessionId, userId, status: "IN_PROGRESS" } }),
+    prisma.exercise.findFirst({ where: { id: exerciseId, userId } }),
+  ]);
+  if (!session) return { ok: false, error: "Entrenamiento no encontrado." };
+  if (!exercise) return { ok: false, error: "Ejercicio no encontrado." };
+
+  const last = await prisma.workoutExercise.findFirst({
+    where: { workoutSessionId: sessionId },
+    orderBy: { order: "desc" },
+  });
+  await prisma.workoutExercise.create({
+    data: { workoutSessionId: sessionId, userId, exerciseId, order: (last?.order ?? -1) + 1 },
+  });
+  return { ok: true };
+}
+
+// Removes this exercise (and any sets logged for it) from today's session
+// only — the Routine it came from, and every other day's history, is
+// untouched.
+export async function removeExerciseFromSession(workoutExerciseId: string) {
+  const userId = await requireUserId();
+  await prisma.workoutExercise.deleteMany({
+    where: { id: workoutExerciseId, userId, workoutSession: { status: "IN_PROGRESS" } },
+  });
 }
 
 export async function getSession(id: string) {

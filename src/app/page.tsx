@@ -1,12 +1,14 @@
 import { getFixedHabitsForDate, getSettingsTz } from "@/lib/habits";
 import { listTasksForDate } from "@/lib/tasks";
 import { getLatestWeightBefore, getWeightForDate } from "@/lib/weight";
+import { getTodayGymStatus } from "@/lib/workouts";
 import { dayKey, nowInTz } from "@/lib/dates";
 import HabitToggle from "@/components/HabitToggle";
 import TaskForm from "@/components/TaskForm";
 import TaskItem from "@/components/TaskItem";
 import WeightQuickInput from "@/components/WeightQuickInput";
 import DateNav from "@/components/DateNav";
+import GymTodayCard from "@/components/GymTodayCard";
 
 export const dynamic = "force-dynamic";
 
@@ -20,10 +22,11 @@ export default async function TodayPage({
   const todayKey = dayKey(nowInTz(tz));
   const date = params.date ?? todayKey;
 
-  const [habits, tasks, weight] = await Promise.all([
+  const [habits, tasks, weight, gymStatus] = await Promise.all([
     getFixedHabitsForDate(date),
     listTasksForDate(date),
     date === todayKey ? getWeightForDate(date) : Promise.resolve(null),
+    date === todayKey ? getTodayGymStatus() : Promise.resolve(null),
   ]);
 
   const suggestedWeight =
@@ -32,6 +35,8 @@ export default async function TodayPage({
   return (
     <div className="space-y-8">
       <DateNav date={date} todayKey={todayKey} />
+
+      {gymStatus && <GymTodayCard status={gymStatus} />}
 
       {date === todayKey && (
         <WeightQuickInput

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addSetAction, deleteSetAction, updateSetAction } from "@/app/gym-actions";
+import { useRouter } from "next/navigation";
+import { addSetAction, deleteSetAction, removeExerciseFromSessionAction, updateSetAction } from "@/app/gym-actions";
 import { MUSCLE_LABELS, SET_TYPE_SHORT } from "@/lib/gymLabels";
 import type { MuscleGroup, SetType } from "@/generated/prisma/client";
 
@@ -128,7 +129,22 @@ export default function WorkoutExerciseCard({
   suggestion: { text: string } | null;
   onSetLogged: () => void;
 }) {
+  const router = useRouter();
   const [sets, setSets] = useState<SetRow[]>(initialSets);
+  const [removing, startRemoveTransition] = useTransition();
+
+  function removeFromSession() {
+    const warning =
+      sets.length > 0
+        ? `¿Quitar "${exerciseName}" de hoy? Perderás las ${sets.length} serie(s) ya registradas en este entrenamiento. La rutina no se modifica.`
+        : `¿Quitar "${exerciseName}" de hoy? La rutina no se modifica, solo el entrenamiento de hoy.`;
+    if (!window.confirm(warning)) return;
+    startRemoveTransition(async () => {
+      await removeExerciseFromSessionAction(workoutExerciseId, sessionId);
+      router.refresh();
+    });
+  }
+
   const lastBest = lastPerformance?.sets.length
     ? lastPerformance.sets.reduce((best, s) => (s.weightKg > best.weightKg ? s : best), lastPerformance.sets[0])
     : null;
@@ -162,11 +178,21 @@ export default function WorkoutExerciseCard({
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]">
       <div>
-        <div className="flex items-center gap-2">
-          <p className="font-medium text-text">{exerciseName}</p>
-          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent-strong">
-            {MUSCLE_LABELS[primaryMuscle]}
-          </span>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-text">{exerciseName}</p>
+            <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent-strong">
+              {MUSCLE_LABELS[primaryMuscle]}
+            </span>
+          </div>
+          <button
+            type="button"
+            disabled={removing}
+            onClick={removeFromSession}
+            className="shrink-0 text-xs text-text-faint hover:text-danger disabled:opacity-50"
+          >
+            Quitar de hoy
+          </button>
         </div>
         <p className="mt-0.5 text-xs text-text-faint">
           {lastBest ? `Última vez: ${lastBest.weightKg}kg × ${lastBest.reps}` : "Sin registros previos"}

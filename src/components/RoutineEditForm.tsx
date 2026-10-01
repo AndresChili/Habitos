@@ -1,19 +1,23 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateRoutineAction } from "@/app/gym-actions";
+import { updateRoutineAction, updateRoutineWeekdaysAction } from "@/app/gym-actions";
+import WeekdayPicker from "@/components/WeekdayPicker";
 
 export default function RoutineEditForm({
   id,
   initialName,
   initialDescription,
+  initialWeekdays,
 }: {
   id: string;
   initialName: string;
   initialDescription: string | null;
+  initialWeekdays: number[];
 }) {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription ?? "");
+  const [weekdays, setWeekdays] = useState(initialWeekdays);
   const [saved, setSaved] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -26,6 +30,11 @@ export default function RoutineEditForm({
       if (!result.ok) setError(result.error);
       else setSaved(true);
     });
+  }
+
+  function changeWeekdays(next: number[]) {
+    setWeekdays(next);
+    startTransition(() => updateRoutineWeekdaysAction(id, next));
   }
 
   return (
@@ -55,6 +64,12 @@ export default function RoutineEditForm({
       >
         {saved ? "Guardado" : "Guardar cambios"}
       </button>
+
+      <div className="space-y-1.5 border-t border-border pt-3">
+        <label className="text-xs font-semibold uppercase tracking-wide text-text-faint">Día asignado</label>
+        <WeekdayPicker value={weekdays} onChange={changeWeekdays} />
+        <p className="text-xs text-text-faint">Si marcas un día que ya tiene otra rutina asignada, se la quita a esa otra.</p>
+      </div>
     </form>
   );
 }

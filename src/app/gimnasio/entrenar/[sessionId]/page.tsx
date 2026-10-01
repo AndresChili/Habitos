@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getSession, getLastPerformance, getSuggestion } from "@/lib/workouts";
+import { listExercises } from "@/lib/exercises";
 import { prisma } from "@/lib/db";
 import ActiveWorkout, { type ActiveExercise } from "@/components/ActiveWorkout";
 
@@ -7,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EntrenarPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const { sessionId } = await params;
-  const session = await getSession(sessionId);
+  const [session, availableExercises] = await Promise.all([getSession(sessionId), listExercises()]);
   if (!session) notFound();
 
   const repTargets = session.routineId
@@ -39,5 +40,12 @@ export default async function EntrenarPage({ params }: { params: Promise<{ sessi
     })
   );
 
-  return <ActiveWorkout sessionId={session.id} routineName={session.routineName} exercises={exercises} />;
+  return (
+    <ActiveWorkout
+      sessionId={session.id}
+      routineName={session.routineName}
+      exercises={exercises}
+      availableExercises={availableExercises.map((e) => ({ id: e.id, name: e.name, primaryMuscle: e.primaryMuscle }))}
+    />
+  );
 }

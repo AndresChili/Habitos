@@ -39,6 +39,12 @@ export const SET_TYPE_SHORT: Record<SetType, string> = {
   BACK_OFF: "Back-off",
 };
 
+export const WEEKDAY_NAMES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+export function formatWeekdays(weekdays: number[]): string {
+  return [...weekdays].sort((a, b) => a - b).map((d) => WEEKDAY_NAMES[d - 1]).join(", ");
+}
+
 export const MUSCLE_ORDER: MuscleGroup[] = [
   "CHEST",
   "BACK",

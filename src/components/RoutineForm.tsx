@@ -2,11 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { createRoutineAction } from "@/app/gym-actions";
+import WeekdayPicker from "@/components/WeekdayPicker";
 
 export default function RoutineForm({ onCreated }: { onCreated?: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [weekdays, setWeekdays] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -26,13 +28,14 @@ export default function RoutineForm({ onCreated }: { onCreated?: () => void }) {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const result = await createRoutineAction(name, description);
+      const result = await createRoutineAction(name, description, weekdays);
       if (!result.ok) {
         setError(result.error);
         return;
       }
       setName("");
       setDescription("");
+      setWeekdays([]);
       setOpen(false);
       onCreated?.();
     });
@@ -56,6 +59,12 @@ export default function RoutineForm({ onCreated }: { onCreated?: () => void }) {
         placeholder="Descripción (opcional)"
         className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent"
       />
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold uppercase tracking-wide text-text-faint">
+          Día de la semana (opcional)
+        </label>
+        <WeekdayPicker value={weekdays} onChange={setWeekdays} />
+      </div>
       {error && <p className="text-xs text-danger">{error}</p>}
       <div className="flex gap-2">
         <button

@@ -38,7 +38,12 @@ export default async function RutinaPage({ params }: { params: Promise<{ id: str
         </button>
       </form>
 
-      <RoutineEditForm id={routine.id} initialName={routine.name} initialDescription={routine.description} />
+      <RoutineEditForm
+        id={routine.id}
+        initialName={routine.name}
+        initialDescription={routine.description}
+        initialWeekdays={routine.weekdays}
+      />
 
       <section className="space-y-2.5">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Ejercicios</h2>

@@ -133,12 +133,15 @@ model WeightLog {
   @@unique([userId, date])
 }
 
-// One row per user.
+// One row per user. gymWeekdays uses the same ISO weekday encoding as
+// Habit.weekdays (1=Monday..7=Sunday) — which days the user trains at all,
+// independent of which routine runs on each of those days (see Routine.weekdays).
 model Settings {
-  id       String @id @default(cuid())
-  userId   String @unique
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  timezone String @default("Europe/Madrid")
+  id           String @id @default(cuid())
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timezone     String @default("Europe/Madrid")
+  gymWeekdays  Int[]  @default([])
 }
 
 // ---- Gimnasio ----
@@ -205,12 +208,16 @@ model Exercise {
 // A reusable template. Deleting/editing a routine never touches past
 // WorkoutSessions — those hold their own WorkoutExercise/SetEntry rows that
 // don't reference RoutineExercise at all (see WorkoutSession below).
+// weekdays: which day(s) this routine runs on (1=Monday..7=Sunday, same
+// encoding as Habit.weekdays). Enforced in application code to be exclusive
+// — assigning a day to one routine clears it from any other.
 model Routine {
   id          String    @id @default(cuid())
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   description String?
+  weekdays    Int[]     @default([])
   archivedAt  DateTime?
   createdAt   DateTime  @default(now())
 
@@ -251,6 +258,10 @@ model WorkoutSession {
   routineId   String?
   routine     Routine?      @relation(fields: [routineId], references: [id], onDelete: SetNull)
   routineName String
+  // "YYYY-MM-DD" in the user's timezone at creation time — same dayKey
+  // convention as Habit/Task, used to answer "is there already a session
+  // for this routine today" without timezone-sensitive instant-range queries.
+  dateKey     String
   status      WorkoutStatus @default(IN_PROGRESS)
   startedAt   DateTime      @default(now())
   finishedAt  DateTime?
@@ -258,7 +269,7 @@ model WorkoutSession {
   exercises WorkoutExercise[]
 
   @@index([userId, startedAt])
-  @@index([userId, routineId])
+  @@index([userId, routineId, dateKey])
 }
 
 // One exercise as actually performed within a session. References Exercise

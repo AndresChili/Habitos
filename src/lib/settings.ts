@@ -9,3 +9,13 @@ export async function getSettings(): Promise<Settings> {
   if (existing) return existing;
   return prisma.settings.create({ data: { userId } });
 }
+
+export async function updateGymWeekdays(weekdays: number[]) {
+  const userId = await requireUserId();
+  const clean = Array.from(new Set(weekdays.filter((d) => Number.isInteger(d) && d >= 1 && d <= 7))).sort();
+  await prisma.settings.upsert({
+    where: { userId },
+    create: { userId, gymWeekdays: clean },
+    update: { gymWeekdays: clean },
+  });
+}

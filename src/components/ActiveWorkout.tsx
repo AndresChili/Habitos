@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { finishWorkoutAction } from "@/app/gym-actions";
 import RestTimer from "@/components/RestTimer";
 import WorkoutExerciseCard from "@/components/WorkoutExerciseCard";
+import AddExerciseToSession from "@/components/AddExerciseToSession";
 import type { MuscleGroup, SetType } from "@/generated/prisma/client";
 
 export type ActiveExercise = {
@@ -21,10 +22,12 @@ export default function ActiveWorkout({
   sessionId,
   routineName,
   exercises,
+  availableExercises,
 }: {
   sessionId: string;
   routineName: string;
   exercises: ActiveExercise[];
+  availableExercises: { id: string; name: string; primaryMuscle: MuscleGroup }[];
 }) {
   const [resetSignal, setResetSignal] = useState(0);
   const [pending, startTransition] = useTransition();
@@ -55,6 +58,8 @@ export default function ActiveWorkout({
           />
         ))}
       </div>
+
+      <AddExerciseToSession sessionId={sessionId} exercises={availableExercises} />
 
       <button
         type="button"

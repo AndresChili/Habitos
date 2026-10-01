@@ -11,9 +11,19 @@ import {
   reorderRoutineExercises,
   updateRoutine,
   updateRoutineExerciseTarget,
+  updateRoutineWeekdays,
 } from "@/lib/routines";
 import { createExercise, type ExerciseInput } from "@/lib/exercises";
-import { addSet, deleteSet, finishSession, startOrResumeSession, updateSet } from "@/lib/workouts";
+import { updateGymWeekdays } from "@/lib/settings";
+import {
+  addExerciseToSession,
+  addSet,
+  deleteSet,
+  finishSession,
+  removeExerciseFromSession,
+  startOrResumeSession,
+  updateSet,
+} from "@/lib/workouts";
 import type { SetType } from "@/generated/prisma/client";
 
 // ---- Ejercicios ----
@@ -26,9 +36,10 @@ export async function createExerciseAction(input: ExerciseInput) {
 
 // ---- Rutinas ----
 
-export async function createRoutineAction(name: string, description?: string) {
-  const result = await createRoutine(name, description);
+export async function createRoutineAction(name: string, description?: string, weekdays: number[] = []) {
+  const result = await createRoutine(name, description, weekdays);
   revalidatePath("/gimnasio");
+  revalidatePath("/");
   return result;
 }
 
@@ -37,6 +48,21 @@ export async function updateRoutineAction(id: string, name: string, description?
   revalidatePath(`/gimnasio/rutinas/${id}`);
   revalidatePath("/gimnasio");
   return result;
+}
+
+export async function updateRoutineWeekdaysAction(id: string, weekdays: number[]) {
+  await updateRoutineWeekdays(id, weekdays);
+  revalidatePath(`/gimnasio/rutinas/${id}`);
+  revalidatePath("/gimnasio");
+  revalidatePath("/");
+}
+
+// ---- Configuración ----
+
+export async function updateGymWeekdaysAction(weekdays: number[]) {
+  await updateGymWeekdays(weekdays);
+  revalidatePath("/gimnasio");
+  revalidatePath("/");
 }
 
 export async function deleteRoutineAction(id: string) {
@@ -122,5 +148,17 @@ export async function deleteSetAction(id: string, sessionId: string) {
 export async function finishWorkoutAction(sessionId: string) {
   await finishSession(sessionId);
   revalidatePath("/gimnasio");
+  revalidatePath("/");
   redirect("/gimnasio");
+}
+
+export async function addExerciseToSessionAction(sessionId: string, exerciseId: string) {
+  const result = await addExerciseToSession(sessionId, exerciseId);
+  revalidatePath(`/gimnasio/entrenar/${sessionId}`);
+  return result;
+}
+
+export async function removeExerciseFromSessionAction(workoutExerciseId: string, sessionId: string) {
+  await removeExerciseFromSession(workoutExerciseId);
+  revalidatePath(`/gimnasio/entrenar/${sessionId}`);
 }

@@ -19,18 +19,54 @@ export async function getRoutine(id: string) {
   });
 }
 
+function cleanWeekdays(weekdays: number[]): number[] {
+  return Array.from(new Set(weekdays.filter((d) => Number.isInteger(d) && d >= 1 && d <= 7))).sort();
+}
+
+// A weekday belongs to at most one routine — assigning it here clears it
+// from whichever other routine of this user currently has it.
+async function claimWeekdaysExclusively(userId: string, routineId: string | null, weekdays: number[]) {
+  if (weekdays.length === 0) return;
+  const others = await prisma.routine.findMany({
+    where: { userId, id: routineId ? { not: routineId } : undefined, archivedAt: null },
+    select: { id: true, weekdays: true },
+  });
+  const conflicting = others.filter((r) => r.weekdays.some((d) => weekdays.includes(d)));
+  await Promise.all(
+    conflicting.map((r) =>
+      prisma.routine.update({ where: { id: r.id }, data: { weekdays: r.weekdays.filter((d) => !weekdays.includes(d)) } })
+    )
+  );
+}
+
 export async function createRoutine(
   name: string,
-  description?: string | null
+  description?: string | null,
+  weekdays: number[] = []
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const userId = await requireUserId();
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: "El nombre no puede estar vacío." };
 
+  const clean = cleanWeekdays(weekdays);
+  await claimWeekdaysExclusively(userId, null, clean);
   const routine = await prisma.routine.create({
-    data: { userId, name: trimmed, description: description?.trim() || null },
+    data: { userId, name: trimmed, description: description?.trim() || null, weekdays: clean },
   });
   return { ok: true, id: routine.id };
+}
+
+export async function updateRoutineWeekdays(id: string, weekdays: number[]) {
+  const userId = await requireUserId();
+  const clean = cleanWeekdays(weekdays);
+  await claimWeekdaysExclusively(userId, id, clean);
+  await prisma.routine.updateMany({ where: { id, userId }, data: { weekdays: clean } });
+}
+
+// The routine assigned to a given weekday (1=Monday..7=Sunday), if any.
+export async function getRoutineForWeekday(weekday: number) {
+  const userId = await requireUserId();
+  return prisma.routine.findFirst({ where: { userId, archivedAt: null, weekdays: { has: weekday } } });
 }
 
 export async function updateRoutine(
