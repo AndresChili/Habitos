@@ -1,64 +1,157 @@
+"use client";
+
 import Link from "next/link";
-import { startWorkoutAction } from "@/app/gym-actions";
+import { useState, useTransition } from "react";
+import { startFreeformWorkoutAction, startWorkoutAction } from "@/app/gym-actions";
 import { IconGym } from "@/components/icons";
 import type { TodayGymStatus } from "@/lib/workouts";
 
-export default function GymTodayCard({ status }: { status: TodayGymStatus }) {
+export default function GymTodayCard({
+  status,
+  otherRoutines,
+}: {
+  status: TodayGymStatus;
+  otherRoutines: { id: string; name: string }[];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [choosingOther, setChoosingOther] = useState(false);
+  const [pending, startTransition] = useTransition();
+
   if (!status.scheduled) return null;
 
-  if (!status.routine) {
+  // Already started (or finished) today — whatever routine (or none) it's
+  // actually running, regardless of what's permanently assigned to today.
+  if (status.session) {
+    if (status.session.status === "COMPLETED") {
+      return (
+        <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-sm shadow-black/[0.03]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+            <IconGym className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="font-medium text-text">{status.session.routineName}</p>
+            <p className="text-xs text-accent-strong">Entrenamiento de hoy completado ✓</p>
+          </div>
+        </div>
+      );
+    }
     return (
-      <Link
-        href="/gimnasio"
-        className="flex items-center gap-3 rounded-2xl border border-dashed border-border px-4 py-3.5 text-sm text-text-muted transition-colors hover:border-accent hover:text-accent"
-      >
-        <IconGym className="h-5 w-5 shrink-0" />
-        Hoy toca gimnasio — asigna una rutina a este día.
-      </Link>
-    );
-  }
-
-  if (status.sessionStatus === "COMPLETED") {
-    return (
-      <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-sm shadow-black/[0.03]">
+      <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-sm shadow-black/[0.03]">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
           <IconGym className="h-4 w-4" />
         </span>
-        <div>
-          <p className="font-medium text-text">{status.routine.name}</p>
-          <p className="text-xs text-accent-strong">Entrenamiento de hoy completado ✓</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-text">{status.session.routineName}</p>
+          <p className="text-xs text-text-faint">Entrenamiento en curso</p>
         </div>
-      </div>
-    );
-  }
-
-  const inProgress = status.sessionStatus === "IN_PROGRESS";
-
-  return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-sm shadow-black/[0.03]">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-        <IconGym className="h-4 w-4" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-text">{status.routine.name}</p>
-        <p className="text-xs text-text-faint">{inProgress ? "Entrenamiento en curso" : "Gimnasio pendiente hoy"}</p>
-      </div>
-      {inProgress && status.sessionId ? (
         <Link
-          href={`/gimnasio/entrenar/${status.sessionId}`}
+          href={`/gimnasio/entrenar/${status.session.id}`}
           className="shrink-0 rounded-xl bg-accent px-3.5 py-2 text-xs font-semibold text-accent-on shadow-sm shadow-black/10"
         >
           Continuar
         </Link>
-      ) : (
-        <form action={startWorkoutAction.bind(null, status.routine.id)}>
+      </div>
+    );
+  }
+
+  // Nothing started yet today.
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-left shadow-sm shadow-black/[0.03] transition-colors hover:border-accent"
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+          <IconGym className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-text">
+            {status.assignedRoutine ? status.assignedRoutine.name : "Hoy toca gimnasio"}
+          </p>
+          <p className="text-xs text-text-faint">Pendiente hoy</p>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4 shrink-0 text-text-faint">
+          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]">
+      <div className="flex items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+          <IconGym className="h-4 w-4" />
+        </span>
+        <p className="text-sm font-medium text-text">Gimnasio hoy</p>
+      </div>
+
+      {!choosingOther ? (
+        <div className="space-y-2">
+          {status.assignedRoutine && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => startTransition(() => startWorkoutAction(status.assignedRoutine!.id))}
+              className="w-full rounded-xl bg-accent py-2.5 text-sm font-semibold text-accent-on shadow-sm shadow-black/10 transition-all active:scale-[0.98] disabled:opacity-50"
+            >
+              Empezar {status.assignedRoutine.name}
+            </button>
+          )}
           <button
-            type="submit"
-            className="shrink-0 rounded-xl bg-accent px-3.5 py-2 text-xs font-semibold text-accent-on shadow-sm shadow-black/10 active:scale-95"
+            type="button"
+            onClick={() => setChoosingOther(true)}
+            className="w-full rounded-xl border border-border py-2.5 text-sm font-medium text-text-muted transition-all active:scale-[0.98]"
           >
-            Empezar
+            Cambiar rutina (solo hoy)
           </button>
-        </form>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="w-full py-1 text-xs text-text-faint"
+          >
+            Cerrar
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs text-text-faint">
+            Esto solo afecta al entrenamiento de hoy — la rutina asignada a este día no cambia.
+          </p>
+          <div className="max-h-56 space-y-1 overflow-y-auto">
+            {otherRoutines.length === 0 ? (
+              <p className="px-1 py-1.5 text-xs text-text-faint">No tienes otras rutinas creadas.</p>
+            ) : (
+              otherRoutines.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  disabled={pending}
+                  onClick={() => startTransition(() => startWorkoutAction(r.id))}
+                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-text transition-colors hover:bg-surface-muted disabled:opacity-50"
+                >
+                  {r.name}
+                </button>
+              ))
+            )}
+          </div>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => startTransition(() => startFreeformWorkoutAction())}
+            className="w-full rounded-xl border border-dashed border-border py-2.5 text-sm font-medium text-text-muted transition-all active:scale-[0.98] hover:border-accent hover:text-accent disabled:opacity-50"
+          >
+            Sin rutina — crear ejercicios manualmente
+          </button>
+          <button
+            type="button"
+            onClick={() => setChoosingOther(false)}
+            className="w-full py-1 text-xs text-text-faint"
+          >
+            Volver
+          </button>
+        </div>
       )}
     </div>
   );

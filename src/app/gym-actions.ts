@@ -21,6 +21,7 @@ import {
   deleteSet,
   finishSession,
   removeExerciseFromSession,
+  startFreeformSession,
   startOrResumeSession,
   updateSet,
 } from "@/lib/workouts";
@@ -113,6 +114,13 @@ export async function reorderRoutineExercisesAction(routineId: string, orderedId
 export async function startWorkoutAction(routineId: string) {
   const result = await startOrResumeSession(routineId);
   if (!result.ok) redirect(`/gimnasio/rutinas/${routineId}`);
+  redirect(`/gimnasio/entrenar/${result.id}`);
+}
+
+// Starts today's workout with no routine at all — exercises get added
+// manually once inside. Never touches any Routine or its weekday assignment.
+export async function startFreeformWorkoutAction(name?: string) {
+  const result = await startFreeformSession(name);
   redirect(`/gimnasio/entrenar/${result.id}`);
 }
 

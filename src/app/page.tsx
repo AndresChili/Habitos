@@ -2,6 +2,7 @@ import { getFixedHabitsForDate, getSettingsTz } from "@/lib/habits";
 import { listTasksForDate } from "@/lib/tasks";
 import { getLatestWeightBefore, getWeightForDate } from "@/lib/weight";
 import { getTodayGymStatus } from "@/lib/workouts";
+import { listRoutines } from "@/lib/routines";
 import { dayKey, nowInTz } from "@/lib/dates";
 import HabitToggle from "@/components/HabitToggle";
 import TaskForm from "@/components/TaskForm";
@@ -32,11 +33,16 @@ export default async function TodayPage({
   const suggestedWeight =
     date === todayKey && weight === null ? await getLatestWeightBefore(date) : null;
 
+  const otherRoutines =
+    gymStatus?.scheduled && !gymStatus.session
+      ? (await listRoutines()).filter((r) => r.id !== gymStatus.assignedRoutine?.id)
+      : [];
+
   return (
     <div className="space-y-8">
       <DateNav date={date} todayKey={todayKey} />
 
-      {gymStatus && <GymTodayCard status={gymStatus} />}
+      {gymStatus && <GymTodayCard status={gymStatus} otherRoutines={otherRoutines} />}
 
       {date === todayKey && (
         <WeightQuickInput

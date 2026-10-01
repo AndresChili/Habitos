@@ -49,10 +49,18 @@ export async function startOrResumeSession(
 
 // ---- "Hoy" integration ----
 
+// assignedRoutine is whichever routine is permanently assigned to today's
+// weekday (Routine.weekdays) — it's only a default suggestion. `session` is
+// whatever was actually started today, which may run a *different* routine
+// (the user chose "Cambiar rutina") or no routine at all (freeform) — so we
+// look up any session for today, not one scoped to assignedRoutine.
 export type TodayGymStatus =
   | { scheduled: false }
-  | { scheduled: true; routine: null }
-  | { scheduled: true; routine: { id: string; name: string }; sessionStatus: "NONE" | "IN_PROGRESS" | "COMPLETED"; sessionId: string | null };
+  | {
+      scheduled: true;
+      assignedRoutine: { id: string; name: string } | null;
+      session: { id: string; status: "IN_PROGRESS" | "COMPLETED"; routineName: string } | null;
+    };
 
 export async function getTodayGymStatus(): Promise<TodayGymStatus> {
   const settings = await getSettings();
@@ -60,21 +68,45 @@ export async function getTodayGymStatus(): Promise<TodayGymStatus> {
   const todayWeekday = isoWeekday(today);
   if (!settings.gymWeekdays.includes(todayWeekday)) return { scheduled: false };
 
-  const routine = await getRoutineForWeekday(todayWeekday);
-  if (!routine) return { scheduled: true, routine: null };
-
   const userId = await requireUserId();
-  const session = await prisma.workoutSession.findFirst({
-    where: { userId, routineId: routine.id, dateKey: dayKey(today) },
-    orderBy: { startedAt: "desc" },
-  });
+  const [routine, session] = await Promise.all([
+    getRoutineForWeekday(todayWeekday),
+    prisma.workoutSession.findFirst({
+      where: { userId, dateKey: dayKey(today) },
+      orderBy: { startedAt: "desc" },
+    }),
+  ]);
 
   return {
     scheduled: true,
-    routine: { id: routine.id, name: routine.name },
-    sessionStatus: session ? session.status : "NONE",
-    sessionId: session?.id ?? null,
+    assignedRoutine: routine ? { id: routine.id, name: routine.name } : null,
+    session: session ? { id: session.id, status: session.status, routineName: session.routineName } : null,
   };
+}
+
+// A one-off session not tied to any Routine — "I'll build today's workout
+// manually." Never touches Routine.weekdays or any routine's exercise list.
+export async function startFreeformSession(
+  name?: string
+): Promise<{ ok: true; id: string }> {
+  const userId = await requireUserId();
+  const settings = await getSettings();
+  const today = dayKey(nowInTz(settings.timezone));
+
+  const existing = await prisma.workoutSession.findFirst({
+    where: { userId, routineId: null, dateKey: today, status: "IN_PROGRESS" },
+  });
+  if (existing) return { ok: true, id: existing.id };
+
+  const session = await prisma.workoutSession.create({
+    data: {
+      userId,
+      routineId: null,
+      routineName: name?.trim() || "Entrenamiento libre",
+      dateKey: today,
+    },
+  });
+  return { ok: true, id: session.id };
 }
 
 // ---- Session-only exercise changes (never touch the Routine template) ----
