@@ -1,6 +1,6 @@
 import { getFixedHabitsForDate, getSettingsTz } from "@/lib/habits";
 import { listTasksForDate } from "@/lib/tasks";
-import { getWeightForDate } from "@/lib/weight";
+import { getLatestWeightBefore, getWeightForDate } from "@/lib/weight";
 import { dayKey, nowInTz } from "@/lib/dates";
 import HabitToggle from "@/components/HabitToggle";
 import TaskForm from "@/components/TaskForm";
@@ -26,11 +26,20 @@ export default async function TodayPage({
     date === todayKey ? getWeightForDate(date) : Promise.resolve(null),
   ]);
 
+  const suggestedWeight =
+    date === todayKey && weight === null ? await getLatestWeightBefore(date) : null;
+
   return (
     <div className="space-y-8">
       <DateNav date={date} todayKey={todayKey} />
 
-      {date === todayKey && <WeightQuickInput date={date} initialWeight={weight?.weightKg ?? null} />}
+      {date === todayKey && (
+        <WeightQuickInput
+          date={date}
+          initialWeight={weight?.weightKg ?? null}
+          suggestedWeight={suggestedWeight?.weightKg ?? null}
+        />
+      )}
 
       <section className="space-y-2.5">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Hábitos</h2>

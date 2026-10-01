@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { logoutAction } from "@/app/actions";
-import { IconGym, IconHabits, IconLogout, IconToday, IconUser, IconWeight } from "@/components/icons";
+import { IconGym, IconHabits, IconToday, IconUser, IconWeight } from "@/components/icons";
 
 const links = [
   { href: "/", label: "Hoy", icon: IconToday },
@@ -38,15 +37,6 @@ export default function Nav() {
             </Link>
           );
         })}
-        <form action={logoutAction}>
-          <button
-            type="submit"
-            className="flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 text-[10px] font-medium text-text-faint transition-all active:scale-95 hover:text-text-muted"
-          >
-            <IconLogout className="h-5 w-5" />
-            Salir
-          </button>
-        </form>
       </div>
     </nav>
   );

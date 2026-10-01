@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal";
-import { changePasswordAction } from "@/app/actions";
+import { changePasswordAction, logoutAction } from "@/app/actions";
+import { IconLogout } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +69,18 @@ export default async function CuentaPage({
             className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-accent-on shadow-sm shadow-black/10 transition-all active:scale-[0.98] hover:bg-accent-strong"
           >
             Actualizar contraseña
+          </button>
+        </form>
+      </section>
+
+      <section>
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-surface py-3 text-sm font-semibold text-text-muted shadow-sm shadow-black/[0.03] transition-all active:scale-[0.98] hover:text-text"
+          >
+            <IconLogout className="h-4 w-4" />
+            Cerrar sesión
           </button>
         </form>
       </section>

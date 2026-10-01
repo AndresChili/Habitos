@@ -7,6 +7,17 @@ export async function getWeightForDate(date: string) {
   return prisma.weightLog.findUnique({ where: { userId_date: { userId, date } } });
 }
 
+// Most recent entry strictly before `date` — used to suggest a starting
+// value when today has no entry yet, however many days ago it was. Never
+// written to the DB on its own; only used to pre-fill the input.
+export async function getLatestWeightBefore(date: string) {
+  const userId = await requireUserId();
+  return prisma.weightLog.findFirst({
+    where: { userId, date: { lt: date } },
+    orderBy: { date: "desc" },
+  });
+}
+
 // One entry per day, entered from "Hoy" — upsert so re-entering the same day corrects it.
 export async function setWeight(
   date: string,

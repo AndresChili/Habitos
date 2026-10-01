@@ -7,12 +7,15 @@ import { IconWeight } from "@/components/icons";
 export default function WeightQuickInput({
   date,
   initialWeight,
+  suggestedWeight = null,
 }: {
   date: string;
   initialWeight: number | null;
+  suggestedWeight?: number | null;
 }) {
-  const [value, setValue] = useState(initialWeight?.toString() ?? "");
+  const [value, setValue] = useState(initialWeight?.toString() ?? suggestedWeight?.toString() ?? "");
   const [saved, setSaved] = useState(initialWeight !== null);
+  const [isSuggestion, setIsSuggestion] = useState(initialWeight === null && suggestedWeight !== null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -41,9 +44,12 @@ export default function WeightQuickInput({
         onChange={(e) => {
           setValue(e.target.value);
           setSaved(false);
+          setIsSuggestion(false);
         }}
         placeholder="72.4"
-        className="w-16 border-0 border-b border-border bg-transparent py-0.5 text-right text-sm text-text outline-none focus:border-accent"
+        className={`w-16 border-0 border-b border-border bg-transparent py-0.5 text-right text-sm outline-none focus:border-accent ${
+          isSuggestion ? "text-text-faint" : "text-text"
+        }`}
       />
       <span className="shrink-0 text-sm text-text-faint">kg</span>
       <button
