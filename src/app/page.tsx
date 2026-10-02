@@ -38,9 +38,11 @@ export default async function TodayPage({
       ? (await listRoutines()).filter((r) => r.id !== gymStatus.assignedRoutine?.id)
       : [];
 
+  const habitsDone = habits.filter((h) => h.done).length;
+
   return (
     <div className="space-y-8">
-      <DateNav date={date} todayKey={todayKey} />
+      <DateNav date={date} todayKey={todayKey} habitsDone={habitsDone} habitsTotal={habits.length} />
 
       {gymStatus && <GymTodayCard status={gymStatus} otherRoutines={otherRoutines} />}
 
@@ -53,13 +55,20 @@ export default async function TodayPage({
       )}
 
       <section className="space-y-2.5">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Hábitos</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Hábitos</h2>
+          {habits.length > 0 && (
+            <span className="text-xs font-bold text-accent-strong">
+              {habitsDone}/{habits.length}
+            </span>
+          )}
+        </div>
         {habits.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-border px-4 py-5 text-center text-sm text-text-faint">
             Sin hábitos programados este día.
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card divide-y divide-border">
             {habits.map((h) => (
               <HabitToggle key={h.id} habitId={h.id} date={date} name={h.name} done={h.done} streak={h.streak} />
             ))}
@@ -71,7 +80,7 @@ export default async function TodayPage({
         <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Tareas</h2>
         <TaskForm date={date} />
         {tasks.length > 0 && (
-          <div className="space-y-2">
+          <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card divide-y divide-border">
             {tasks.map((t) => (
               <TaskItem key={t.id} id={t.id} date={date} title={t.title} time={t.time} done={t.done} />
             ))}

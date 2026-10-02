@@ -24,7 +24,7 @@ export default function WeekdayPicker({
             type="button"
             onClick={() => toggle(day)}
             className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold transition-all active:scale-90 ${
-              active ? "bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow" : "bg-surface-muted text-text-muted"
+              active ? "bg-gradient-to-br from-violet to-violet-2 text-violet-on shadow-glow-violet" : "bg-surface-muted text-text-muted"
             }`}
           >
             {label}

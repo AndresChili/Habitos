@@ -31,7 +31,7 @@ export default async function EjerciciosPage() {
               <Link
                 key={e.id}
                 href={`/gimnasio/ejercicios/${e.id}`}
-                className="flex items-center justify-between rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-card transition-colors hover:border-accent"
+                className="flex items-center justify-between rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-card transition-colors hover:border-violet"
               >
                 <span className="text-text">{e.name}</span>
                 <span className="text-xs text-text-faint">{EQUIPMENT_LABELS[e.equipment]}</span>

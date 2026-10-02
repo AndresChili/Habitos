@@ -51,7 +51,7 @@ function RepRangeEditor({
         value={minVal}
         onChange={(e) => setMinVal(e.target.value)}
         placeholder="8"
-        className="w-10 rounded-lg border border-border bg-surface px-1.5 py-1 text-center text-xs text-text outline-none focus:border-accent"
+        className="w-10 rounded-lg border border-border bg-surface px-1.5 py-1 text-center text-xs text-text outline-none focus:border-violet"
       />
       <span className="text-xs text-text-faint">–</span>
       <input
@@ -59,7 +59,7 @@ function RepRangeEditor({
         value={maxVal}
         onChange={(e) => setMaxVal(e.target.value)}
         placeholder="12"
-        className="w-10 rounded-lg border border-border bg-surface px-1.5 py-1 text-center text-xs text-text outline-none focus:border-accent"
+        className="w-10 rounded-lg border border-border bg-surface px-1.5 py-1 text-center text-xs text-text outline-none focus:border-violet"
       />
       <button
         type="button"
@@ -75,7 +75,7 @@ function RepRangeEditor({
             setEditing(false);
           })
         }
-        className="rounded-lg bg-accent-soft px-2 py-1 text-xs font-medium text-accent-strong"
+        className="rounded-lg bg-violet-soft px-2 py-1 text-xs font-medium text-violet-strong"
       >
         OK
       </button>
@@ -148,7 +148,7 @@ export default function RoutineExerciseList({
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-text">{item.exercise.name}</p>
             <div className="mt-0.5 flex items-center gap-2">
-              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent-strong">
+              <span className="rounded-full bg-violet-soft px-2 py-0.5 text-[10px] font-medium text-violet-strong">
                 {MUSCLE_LABELS[item.exercise.primaryMuscle]}
               </span>
               <RepRangeEditor id={item.id} routineId={routineId} min={item.targetRepMin} max={item.targetRepMax} />

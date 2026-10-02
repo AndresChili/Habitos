@@ -45,21 +45,25 @@ export default async function EjercicioDetailPage({ params }: { params: Promise<
         <>
           <section className="grid grid-cols-2 gap-3">
             <StatTile
+              accent="violet"
               label="Peso máximo"
               value={prs.bestWeight ? `${prs.bestWeight.weightKg}kg` : "—"}
               hint={prs.bestWeight ? `× ${prs.bestWeight.reps} reps` : undefined}
             />
             <StatTile
+              accent="violet"
               label="Más repeticiones"
               value={prs.bestReps ? `${prs.bestReps.reps}` : "—"}
               hint={prs.bestReps ? `a ${prs.bestReps.weightKg}kg` : undefined}
             />
             <StatTile
+              accent="violet"
               label="Mejor volumen"
               value={prs.bestVolume ? `${Math.round(prs.bestVolume.volume)}kg` : "—"}
               hint="en una sesión"
             />
             <StatTile
+              accent="violet"
               label="e1RM estimado"
               value={prs.bestEstimatedOneRm ? `${Math.round(prs.bestEstimatedOneRm.value)}kg` : "—"}
               hint={prs.bestEstimatedOneRm ? `desde ${prs.bestEstimatedOneRm.weightKg}kg × ${prs.bestEstimatedOneRm.reps}` : undefined}

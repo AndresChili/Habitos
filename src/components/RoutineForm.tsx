@@ -17,7 +17,7 @@ export default function RoutineForm({ onCreated }: { onCreated?: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-2xl border border-dashed border-border py-3 text-sm font-medium text-text-muted transition-all active:scale-[0.98] hover:border-accent hover:text-accent"
+        className="w-full rounded-2xl border border-dashed border-border py-3 text-sm font-medium text-text-muted transition-all active:scale-[0.98] hover:border-violet hover:text-violet"
       >
         + Añadir rutina
       </button>
@@ -51,13 +51,13 @@ export default function RoutineForm({ onCreated }: { onCreated?: () => void }) {
         onChange={(e) => setName(e.target.value)}
         autoFocus
         placeholder="Ej. Lunes — Espalda y Bíceps"
-        className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent"
+        className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-violet"
       />
       <input
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Descripción (opcional)"
-        className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent"
+        className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-violet"
       />
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase tracking-wide text-text-faint">
@@ -77,7 +77,7 @@ export default function RoutineForm({ onCreated }: { onCreated?: () => void }) {
         <button
           type="submit"
           disabled={pending || !name.trim()}
-          className="flex-1 rounded-xl bg-gradient-to-br from-accent to-accent-2 py-2.5 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
+          className="flex-1 rounded-xl bg-gradient-to-br from-violet to-violet-2 py-2.5 text-sm font-semibold text-violet-on shadow-glow-violet transition-all active:scale-[0.98] disabled:opacity-50"
         >
           Crear
         </button>

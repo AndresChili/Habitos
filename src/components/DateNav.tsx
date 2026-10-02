@@ -5,7 +5,17 @@ import { useRouter } from "next/navigation";
 import { format, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 
-export default function DateNav({ date, todayKey }: { date: string; todayKey: string }) {
+export default function DateNav({
+  date,
+  todayKey,
+  habitsDone,
+  habitsTotal,
+}: {
+  date: string;
+  todayKey: string;
+  habitsDone?: number;
+  habitsTotal?: number;
+}) {
   const router = useRouter();
   const dateInputRef = useRef<HTMLInputElement>(null);
   const parsed = parseISO(date);
@@ -60,6 +70,20 @@ export default function DateNav({ date, todayKey }: { date: string; todayKey: st
           <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
+
+      {habitsTotal !== undefined && habitsTotal > 0 && (() => {
+        const pct = Math.round(((habitsDone ?? 0) / habitsTotal) * 360);
+        return (
+          <div
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+            style={{ background: `conic-gradient(var(--accent) 0deg ${pct}deg, var(--border) ${pct}deg 360deg)` }}
+          >
+            <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-bg text-[11px] font-bold text-accent-strong">
+              {habitsDone ?? 0}/{habitsTotal}
+            </div>
+          </div>
+        );
+      })()}
     </header>
   );
 }

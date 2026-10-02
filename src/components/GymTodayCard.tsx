@@ -35,12 +35,12 @@ export default function GymTodayCard({
     if (status.session.status === "COMPLETED") {
       return (
         <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-card">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet to-violet-2 text-violet-on shadow-glow-violet">
             <IconGym className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-medium text-text">{status.session.routineName}</p>
-            <p className="text-xs text-accent-strong">Entrenamiento de hoy completado ✓</p>
+            <p className="text-xs text-violet-strong">Entrenamiento de hoy completado ✓</p>
           </div>
           <button
             type="button"
@@ -54,30 +54,48 @@ export default function GymTodayCard({
         </div>
       );
     }
+    const { exercisesTotal, exercisesDone } = status.session;
+    const pct = exercisesTotal > 0 ? Math.round((exercisesDone / exercisesTotal) * 100) : 0;
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-card">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
-          <IconGym className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-text">{status.session.routineName}</p>
-          <p className="text-xs text-text-faint">Entrenamiento en curso</p>
+      <div className="rounded-2xl border border-violet/25 bg-gradient-to-br from-violet-soft to-surface px-4 py-3.5 shadow-card">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet to-violet-2 text-violet-on shadow-glow-violet">
+            <IconGym className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-text">{status.session.routineName}</p>
+            {exercisesTotal > 0 ? (
+              <p className="text-xs font-semibold text-violet-strong">
+                {exercisesDone} de {exercisesTotal} ejercicios hechos
+              </p>
+            ) : (
+              <p className="text-xs text-text-faint">Entrenamiento en curso</p>
+            )}
+          </div>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => handleDeleteSession(status.session!.id)}
+            className="shrink-0 rounded-lg p-2 text-text-faint transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-50"
+            aria-label="Eliminar entrenamiento"
+          >
+            <IconTrash className="h-4 w-4" />
+          </button>
+          <Link
+            href={`/gimnasio/entrenar/${status.session.id}`}
+            className="shrink-0 rounded-xl bg-gradient-to-br from-violet to-violet-2 px-3.5 py-2 text-xs font-semibold text-violet-on shadow-glow-violet"
+          >
+            Continuar
+          </Link>
         </div>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => handleDeleteSession(status.session!.id)}
-          className="shrink-0 rounded-lg p-2 text-text-faint transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-50"
-          aria-label="Eliminar entrenamiento"
-        >
-          <IconTrash className="h-4 w-4" />
-        </button>
-        <Link
-          href={`/gimnasio/entrenar/${status.session.id}`}
-          className="shrink-0 rounded-xl bg-gradient-to-br from-accent to-accent-2 px-3.5 py-2 text-xs font-semibold text-accent-on shadow-glow"
-        >
-          Continuar
-        </Link>
+        {exercisesTotal > 0 && (
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-violet-soft">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-violet to-violet-2 transition-all"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        )}
       </div>
     );
   }
@@ -88,9 +106,9 @@ export default function GymTodayCard({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-left shadow-card transition-colors hover:border-accent"
+        className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-left shadow-card transition-colors hover:border-violet"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet to-violet-2 text-violet-on shadow-glow-violet">
           <IconGym className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
@@ -109,7 +127,7 @@ export default function GymTodayCard({
   return (
     <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-card">
       <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet to-violet-2 text-violet-on shadow-glow-violet">
           <IconGym className="h-4 w-4" />
         </span>
         <p className="text-sm font-medium text-text">Gimnasio hoy</p>
@@ -122,7 +140,7 @@ export default function GymTodayCard({
               type="button"
               disabled={pending}
               onClick={() => startTransition(() => startWorkoutAction(status.assignedRoutine!.id))}
-              className="w-full rounded-xl bg-gradient-to-br from-accent to-accent-2 py-2.5 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full rounded-xl bg-gradient-to-br from-violet to-violet-2 py-2.5 text-sm font-semibold text-violet-on shadow-glow-violet transition-all active:scale-[0.98] disabled:opacity-50"
             >
               Empezar {status.assignedRoutine.name}
             </button>
@@ -168,7 +186,7 @@ export default function GymTodayCard({
             type="button"
             disabled={pending}
             onClick={() => startTransition(() => startFreeformWorkoutAction())}
-            className="w-full rounded-xl border border-dashed border-border py-2.5 text-sm font-medium text-text-muted transition-all active:scale-[0.98] hover:border-accent hover:text-accent disabled:opacity-50"
+            className="w-full rounded-xl border border-dashed border-border py-2.5 text-sm font-medium text-text-muted transition-all active:scale-[0.98] hover:border-violet hover:text-violet disabled:opacity-50"
           >
             Sin rutina — crear ejercicios manualmente
           </button>

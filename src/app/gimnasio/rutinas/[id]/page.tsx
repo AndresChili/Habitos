@@ -32,7 +32,7 @@ export default async function RutinaPage({ params }: { params: Promise<{ id: str
       <form action={startWorkoutAction.bind(null, routine.id)}>
         <button
           type="submit"
-          className="w-full rounded-2xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] hover:brightness-110"
+          className="w-full rounded-2xl bg-gradient-to-br from-violet to-violet-2 py-3 text-sm font-semibold text-violet-on shadow-glow-violet transition-all active:scale-[0.98] hover:brightness-110"
         >
           Empezar entrenamiento
         </button>

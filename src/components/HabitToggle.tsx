@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { toggleHabitLogAction } from "@/app/actions";
-import { IconCheck } from "@/components/icons";
+import { IconCheck, IconFlame } from "@/components/icons";
 
 export default function HabitToggle({
   habitId,
@@ -24,10 +24,8 @@ export default function HabitToggle({
       type="button"
       disabled={pending}
       onClick={() => startTransition(() => toggleHabitLogAction(habitId, date))}
-      className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3.5 text-left text-sm shadow-card transition-all active:scale-[0.98] disabled:opacity-60 ${
-        done
-          ? "border-accent/25 bg-accent-soft text-text"
-          : "border-border bg-surface text-text hover:border-text-faint/60"
+      className={`flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm transition-all active:scale-[0.99] disabled:opacity-60 ${
+        done ? "text-text" : "text-text hover:bg-surface-muted"
       }`}
     >
       <span
@@ -37,9 +35,10 @@ export default function HabitToggle({
       >
         {done && <IconCheck />}
       </span>
-      <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
+      <span className={`min-w-0 flex-1 truncate font-medium ${done ? "" : "text-text-muted"}`}>{name}</span>
       {streak > 0 && (
-        <span className="shrink-0 rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-text-muted">
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-warn-soft px-2.5 py-1 text-xs font-bold text-warn">
+          <IconFlame className="h-3 w-3" />
           {streak}
         </span>
       )}

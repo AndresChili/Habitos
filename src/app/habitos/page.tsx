@@ -30,12 +30,9 @@ export default async function HabitosPage() {
         {fixed.length === 0 ? (
           <p className="text-sm text-text-faint">Ninguno todavía.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card divide-y divide-border">
             {fixed.map((h) => (
-              <div
-                key={h.id}
-                className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-card"
-              >
+              <div key={h.id} className="flex items-center justify-between px-4 py-3.5 text-sm">
                 <div>
                   <p className="font-medium text-text">{h.name}</p>
                   <p className="mt-0.5 text-xs text-text-faint">

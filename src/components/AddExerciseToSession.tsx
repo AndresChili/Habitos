@@ -36,7 +36,7 @@ export default function AddExerciseToSession({ sessionId, exercises }: { session
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-2xl border border-dashed border-border py-3 text-sm font-medium text-text-muted transition-all active:scale-[0.98] hover:border-accent hover:text-accent"
+        className="w-full rounded-2xl border border-dashed border-border py-3 text-sm font-medium text-text-muted transition-all active:scale-[0.98] hover:border-violet hover:text-violet"
       >
         + Añadir ejercicio a este entrenamiento
       </button>
@@ -51,7 +51,7 @@ export default function AddExerciseToSession({ sessionId, exercises }: { session
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
           placeholder="Buscar ejercicio..."
-          className="flex-1 rounded-xl border border-border bg-surface px-3.5 py-2 text-sm text-text outline-none focus:border-accent"
+          className="flex-1 rounded-xl border border-border bg-surface px-3.5 py-2 text-sm text-text outline-none focus:border-violet"
         />
         <button
           type="button"
@@ -74,7 +74,7 @@ export default function AddExerciseToSession({ sessionId, exercises }: { session
               className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors hover:bg-surface-muted disabled:opacity-50"
             >
               <span className="text-text">{e.name}</span>
-              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent-strong">
+              <span className="rounded-full bg-violet-soft px-2 py-0.5 text-[10px] font-medium text-violet-strong">
                 {MUSCLE_LABELS[e.primaryMuscle]}
               </span>
             </button>

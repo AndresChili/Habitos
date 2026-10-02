@@ -26,14 +26,11 @@ export default async function PesoPage() {
 
           <section className="space-y-2.5">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Histórico</h2>
-            <div className="space-y-1.5">
+            <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card divide-y divide-border">
               {ordered.map((w) => (
-                <div
-                  key={w.id}
-                  className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm shadow-card"
-                >
+                <div key={w.id} className="flex items-center justify-between px-4 py-3 text-sm">
                   <span className="capitalize text-text-muted">{format(parseISO(w.date), "EEEE, d MMM", { locale: es })}</span>
-                  <span className="font-semibold text-text">{w.weightKg} kg</span>
+                  <span className="font-semibold text-rose-strong">{w.weightKg} kg</span>
                 </div>
               ))}
             </div>

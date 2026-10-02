@@ -26,7 +26,7 @@ export default async function RecordsPage() {
             <Link
               key={pr.exerciseId}
               href={`/gimnasio/ejercicios/${pr.exerciseId}`}
-              className="block space-y-2 rounded-2xl border border-border bg-surface p-4 shadow-card transition-colors hover:border-accent"
+              className="block space-y-2 rounded-2xl border border-border bg-surface p-4 shadow-card transition-colors hover:border-violet"
             >
               <p className="font-medium text-text">{pr.exerciseName}</p>
               <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-text-faint">

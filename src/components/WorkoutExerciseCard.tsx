@@ -19,7 +19,7 @@ function SetTypePicker({ value, onChange }: { value: SetType; onChange: (t: SetT
           type="button"
           onClick={() => onChange(t)}
           className={`rounded-lg px-2 py-1 text-[10px] font-medium transition-all ${
-            value === t ? "bg-gradient-to-br from-accent to-accent-2 text-accent-on" : "bg-surface-muted text-text-faint"
+            value === t ? "bg-gradient-to-br from-violet to-violet-2 text-violet-on" : "bg-surface-muted text-text-faint"
           }`}
         >
           {SET_TYPE_SHORT[t]}
@@ -63,20 +63,20 @@ function ExistingSetRow({
   }
 
   return (
-    <div className="space-y-2 rounded-xl border border-accent/40 bg-surface px-3 py-2.5">
+    <div className="space-y-2 rounded-xl border border-violet/40 bg-surface px-3 py-2.5">
       <div className="flex items-center gap-2">
         <input
           inputMode="decimal"
           value={weight}
           onChange={(e) => setWeight(e.target.value)}
-          className="w-16 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm outline-none focus:border-accent"
+          className="w-16 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm outline-none focus:border-violet"
         />
         <span className="text-xs text-text-faint">kg ×</span>
         <input
           inputMode="numeric"
           value={reps}
           onChange={(e) => setReps(e.target.value)}
-          className="w-14 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm outline-none focus:border-accent"
+          className="w-14 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm outline-none focus:border-violet"
         />
         <span className="text-xs text-text-faint">reps</span>
       </div>
@@ -97,7 +97,7 @@ function ExistingSetRow({
               }
             })
           }
-          className="flex-1 rounded-lg bg-gradient-to-br from-accent to-accent-2 py-1.5 text-xs font-semibold text-accent-on disabled:opacity-50"
+          className="flex-1 rounded-lg bg-gradient-to-br from-violet to-violet-2 py-1.5 text-xs font-semibold text-violet-on disabled:opacity-50"
         >
           Guardar
         </button>
@@ -181,7 +181,7 @@ export default function WorkoutExerciseCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
             <p className="font-medium text-text">{exerciseName}</p>
-            <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent-strong">
+            <span className="rounded-full bg-violet-soft px-2 py-0.5 text-[10px] font-medium text-violet-strong">
               {MUSCLE_LABELS[primaryMuscle]}
             </span>
           </div>
@@ -198,7 +198,7 @@ export default function WorkoutExerciseCard({
           {lastBest ? `Última vez: ${lastBest.weightKg}kg × ${lastBest.reps}` : "Sin registros previos"}
           {targetRepMin && targetRepMax ? ` · objetivo ${targetRepMin}-${targetRepMax} reps` : ""}
         </p>
-        {suggestion && <p className="mt-1 text-xs text-accent-strong">{suggestion.text}</p>}
+        {suggestion && <p className="mt-1 text-xs text-violet-strong">{suggestion.text}</p>}
       </div>
 
       {sets.length > 0 && (
@@ -223,7 +223,7 @@ export default function WorkoutExerciseCard({
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
             placeholder="kg"
-            className="w-16 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm outline-none focus:border-accent"
+            className="w-16 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm outline-none focus:border-violet"
           />
           <span className="text-xs text-text-faint">kg ×</span>
           <input
@@ -231,13 +231,13 @@ export default function WorkoutExerciseCard({
             value={reps}
             onChange={(e) => setReps(e.target.value)}
             placeholder="reps"
-            className="w-14 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm outline-none focus:border-accent"
+            className="w-14 rounded-lg border border-border bg-surface px-2 py-1.5 text-center text-sm outline-none focus:border-violet"
           />
           <span className="text-xs text-text-faint">reps</span>
           <button
             type="submit"
             disabled={pending || !weight.trim() || !reps.trim()}
-            className="ml-auto shrink-0 rounded-lg bg-gradient-to-br from-accent to-accent-2 px-3.5 py-1.5 text-xs font-semibold text-accent-on disabled:opacity-50"
+            className="ml-auto shrink-0 rounded-lg bg-gradient-to-br from-violet to-violet-2 px-3.5 py-1.5 text-xs font-semibold text-violet-on disabled:opacity-50"
           >
             + Serie
           </button>

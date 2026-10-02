@@ -45,7 +45,7 @@ export default function RoutineEditForm({
           setName(e.target.value);
           setSaved(false);
         }}
-        className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm font-medium text-text outline-none transition-colors focus:border-accent"
+        className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm font-medium text-text outline-none transition-colors focus:border-violet"
       />
       <input
         value={description}
@@ -54,13 +54,13 @@ export default function RoutineEditForm({
           setSaved(false);
         }}
         placeholder="Descripción (opcional)"
-        className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-accent"
+        className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-text outline-none transition-colors focus:border-violet"
       />
       {error && <p className="text-xs text-danger">{error}</p>}
       <button
         type="submit"
         disabled={pending || !name.trim() || saved}
-        className="rounded-xl bg-gradient-to-br from-accent to-accent-2 px-4 py-2 text-xs font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
+        className="rounded-xl bg-gradient-to-br from-violet to-violet-2 px-4 py-2 text-xs font-semibold text-violet-on shadow-glow-violet transition-all active:scale-[0.98] disabled:opacity-50"
       >
         {saved ? "Guardado" : "Guardar cambios"}
       </button>

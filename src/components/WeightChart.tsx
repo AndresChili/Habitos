@@ -55,7 +55,7 @@ export default function WeightChart({ data }: { data: Point[] }) {
     <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-card">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-2xl font-semibold text-text">{current.toFixed(1)} kg</p>
+          <p className="bg-gradient-to-br from-rose to-rose-2 bg-clip-text text-2xl font-bold text-transparent">{current.toFixed(1)} kg</p>
           {filtered.length > 1 && (
             <p className="text-xs text-text-muted">
               {delta > 0 ? "+" : ""}
@@ -70,7 +70,7 @@ export default function WeightChart({ data }: { data: Point[] }) {
               type="button"
               onClick={() => setRange(r.key)}
               className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all active:scale-95 ${
-                range === r.key ? "bg-accent-soft text-accent-strong" : "text-text-faint hover:text-text-muted"
+                range === r.key ? "bg-rose-soft text-rose-strong" : "text-text-faint hover:text-text-muted"
               }`}
             >
               {r.label}
@@ -80,9 +80,9 @@ export default function WeightChart({ data }: { data: Point[] }) {
       </div>
 
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-36 w-full" preserveAspectRatio="none">
-        <path d={path} fill="none" stroke="var(--accent)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={path} fill="none" stroke="var(--rose)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
         {points.length < 40 &&
-          points.map((p) => <circle key={p.date} cx={p.x} cy={p.y} r={2.2} fill="var(--accent)" />)}
+          points.map((p) => <circle key={p.date} cx={p.x} cy={p.y} r={2.2} fill="var(--rose)" />)}
       </svg>
 
       <div className="flex justify-between text-xs text-text-faint">

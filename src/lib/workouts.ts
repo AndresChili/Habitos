@@ -59,7 +59,15 @@ export type TodayGymStatus =
   | {
       scheduled: true;
       assignedRoutine: { id: string; name: string } | null;
-      session: { id: string; status: "IN_PROGRESS" | "COMPLETED"; routineName: string } | null;
+      session:
+        | {
+            id: string;
+            status: "IN_PROGRESS" | "COMPLETED";
+            routineName: string;
+            exercisesTotal: number;
+            exercisesDone: number;
+          }
+        | null;
     };
 
 export async function getTodayGymStatus(): Promise<TodayGymStatus> {
@@ -74,6 +82,7 @@ export async function getTodayGymStatus(): Promise<TodayGymStatus> {
     prisma.workoutSession.findFirst({
       where: { userId, dateKey: dayKey(today) },
       orderBy: { startedAt: "desc" },
+      include: { exercises: { select: { sets: { select: { id: true }, take: 1 } } } },
     }),
   ]);
 
@@ -85,7 +94,15 @@ export async function getTodayGymStatus(): Promise<TodayGymStatus> {
   return {
     scheduled: true,
     assignedRoutine: routine ? { id: routine.id, name: routine.name } : null,
-    session: session ? { id: session.id, status: session.status, routineName: session.routineName } : null,
+    session: session
+      ? {
+          id: session.id,
+          status: session.status,
+          routineName: session.routineName,
+          exercisesTotal: session.exercises.length,
+          exercisesDone: session.exercises.filter((e) => e.sets.length > 0).length,
+        }
+      : null,
   };
 }
 
