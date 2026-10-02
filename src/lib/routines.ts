@@ -103,35 +103,6 @@ export async function deleteRoutine(id: string) {
   await prisma.routine.deleteMany({ where: { id, userId } });
 }
 
-export async function duplicateRoutine(
-  id: string
-): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const userId = await requireUserId();
-  const original = await prisma.routine.findFirst({
-    where: { id, userId },
-    include: { exercises: { orderBy: { order: "asc" } } },
-  });
-  if (!original) return { ok: false, error: "Rutina no encontrada." };
-
-  const copy = await prisma.routine.create({
-    data: {
-      userId,
-      name: `${original.name} (copia)`,
-      description: original.description,
-      exercises: {
-        create: original.exercises.map((re) => ({
-          userId,
-          exerciseId: re.exerciseId,
-          order: re.order,
-          targetRepMin: re.targetRepMin,
-          targetRepMax: re.targetRepMax,
-        })),
-      },
-    },
-  });
-  return { ok: true, id: copy.id };
-}
-
 export async function addExerciseToRoutine(
   routineId: string,
   exerciseId: string,

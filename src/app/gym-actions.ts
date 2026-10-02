@@ -6,7 +6,6 @@ import {
   addExerciseToRoutine,
   createRoutine,
   deleteRoutine,
-  duplicateRoutine,
   removeExerciseFromRoutine,
   reorderRoutineExercises,
   updateRoutine,
@@ -70,12 +69,6 @@ export async function deleteRoutineAction(id: string) {
   await deleteRoutine(id);
   revalidatePath("/gimnasio");
   redirect("/gimnasio");
-}
-
-export async function duplicateRoutineAction(id: string) {
-  const result = await duplicateRoutine(id);
-  revalidatePath("/gimnasio");
-  return result;
 }
 
 export async function addExerciseToRoutineAction(

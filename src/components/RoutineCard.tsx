@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { deleteRoutineAction, duplicateRoutineAction, startWorkoutAction } from "@/app/gym-actions";
+import { deleteRoutineAction, startWorkoutAction } from "@/app/gym-actions";
 import { formatWeekdays } from "@/lib/gymLabels";
 
 export default function RoutineCard({
@@ -19,19 +18,11 @@ export default function RoutineCard({
   exerciseCount: number;
   weekdays: number[];
 }) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   function handleDelete() {
     if (!window.confirm(`¿Eliminar "${name}"? Tus entrenamientos ya registrados no se verán afectados.`)) return;
     startTransition(() => deleteRoutineAction(id));
-  }
-
-  function handleDuplicate() {
-    startTransition(async () => {
-      const result = await duplicateRoutineAction(id);
-      if (result.ok) router.refresh();
-    });
   }
 
   return (
@@ -59,14 +50,6 @@ export default function RoutineCard({
         >
           Editar
         </Link>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={handleDuplicate}
-          className="rounded-lg px-2 py-1.5 text-xs font-medium transition-all hover:bg-surface-muted hover:text-text-muted active:scale-95 disabled:opacity-50"
-        >
-          Duplicar
-        </button>
         <button
           type="button"
           disabled={pending}
