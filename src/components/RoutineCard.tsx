@@ -35,18 +35,18 @@ export default function RoutineCard({
           {weekdays.length > 0 && ` · ${formatWeekdays(weekdays)}`}
         </p>
       </div>
-      <div className="flex items-center gap-1 text-text-faint">
+      <div className="flex items-center gap-1.5">
         <form action={startWorkoutAction.bind(null, id)} className="flex-1">
           <button
             type="submit"
-            className="w-full rounded-lg bg-accent-soft px-2 py-1.5 text-xs font-semibold text-accent-strong transition-all active:scale-95"
+            className="w-full rounded-lg bg-accent-soft py-1.5 text-xs font-semibold text-accent-strong transition-all active:scale-95"
           >
             Entrenar
           </button>
         </form>
         <Link
           href={`/gimnasio/rutinas/${id}`}
-          className="rounded-lg px-2 py-1.5 text-xs font-medium transition-all hover:bg-surface-muted hover:text-text-muted active:scale-95"
+          className="flex-1 rounded-lg border border-border py-1.5 text-center text-xs font-semibold text-text-muted transition-all hover:border-accent hover:text-accent active:scale-95"
         >
           Ver
         </Link>
@@ -54,7 +54,7 @@ export default function RoutineCard({
           type="button"
           disabled={pending}
           onClick={handleDelete}
-          className="rounded-lg px-2 py-1.5 text-xs font-medium transition-all hover:bg-danger/10 hover:text-danger active:scale-95 disabled:opacity-50"
+          className="flex-1 rounded-lg bg-danger/10 py-1.5 text-xs font-semibold text-danger transition-all active:scale-95 disabled:opacity-50"
         >
           Eliminar
         </button>

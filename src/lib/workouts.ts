@@ -66,16 +66,21 @@ export async function getTodayGymStatus(): Promise<TodayGymStatus> {
   const settings = await getSettings();
   const today = nowInTz(settings.timezone);
   const todayWeekday = isoWeekday(today);
-  if (!settings.gymWeekdays.includes(todayWeekday)) return { scheduled: false };
+  const isScheduledDay = settings.gymWeekdays.includes(todayWeekday);
 
   const userId = await requireUserId();
   const [routine, session] = await Promise.all([
-    getRoutineForWeekday(todayWeekday),
+    isScheduledDay ? getRoutineForWeekday(todayWeekday) : Promise.resolve(null),
     prisma.workoutSession.findFirst({
       where: { userId, dateKey: dayKey(today) },
       orderBy: { startedAt: "desc" },
     }),
   ]);
+
+  // A workout started today (e.g. freeform, or before the schedule changed)
+  // still needs to show up and be resumable even on a day with no routine
+  // assigned — only hide the card when there's truly nothing going on.
+  if (!isScheduledDay && !session) return { scheduled: false };
 
   return {
     scheduled: true,
