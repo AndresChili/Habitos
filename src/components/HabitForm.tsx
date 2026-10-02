@@ -89,7 +89,7 @@ export default function HabitForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-5 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]">
+    <form onSubmit={submit} className="space-y-5 rounded-2xl border border-border bg-surface p-4 shadow-card">
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase tracking-wide text-text-faint">Nombre</label>
         <input
@@ -106,7 +106,7 @@ export default function HabitForm({
             type="button"
             onClick={() => setMode("days")}
             className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
-              mode === "days" ? "bg-surface text-text shadow-sm shadow-black/[0.04]" : "text-text-muted"
+              mode === "days" ? "bg-surface text-text shadow-card" : "text-text-muted"
             }`}
           >
             Días concretos
@@ -115,7 +115,7 @@ export default function HabitForm({
             type="button"
             onClick={() => setMode("frequency")}
             className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
-              mode === "frequency" ? "bg-surface text-text shadow-sm shadow-black/[0.04]" : "text-text-muted"
+              mode === "frequency" ? "bg-surface text-text shadow-card" : "text-text-muted"
             }`}
           >
             Frecuencia
@@ -133,7 +133,7 @@ export default function HabitForm({
                   type="button"
                   onClick={() => toggleWeekday(day)}
                   className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold transition-all active:scale-90 ${
-                    active ? "bg-accent text-accent-on shadow-sm shadow-black/10" : "bg-surface-muted text-text-muted"
+                    active ? "bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow" : "bg-surface-muted text-text-muted"
                   }`}
                 >
                   {label}
@@ -172,7 +172,7 @@ export default function HabitForm({
       <button
         type="submit"
         disabled={pending || !name.trim() || (mode === "days" && weekdays.length === 0)}
-        className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-accent-on shadow-sm shadow-black/10 transition-all active:scale-[0.98] disabled:opacity-50"
+        className="w-full rounded-xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
       >
         {formMode === "create" ? "Crear hábito" : "Guardar cambios"}
       </button>

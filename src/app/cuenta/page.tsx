@@ -25,7 +25,7 @@ export default async function CuentaPage({
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-text">Cuenta</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-text">Cuenta</h1>
         <p className="text-sm text-text-muted">{user.email}</p>
       </header>
 
@@ -38,7 +38,7 @@ export default async function CuentaPage({
         <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Cambiar contraseña</h2>
         <form
           action={changePasswordAction}
-          className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]"
+          className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-card"
         >
           <input
             type="password"
@@ -72,7 +72,7 @@ export default async function CuentaPage({
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-accent-on shadow-sm shadow-black/10 transition-all active:scale-[0.98] hover:bg-accent-strong"
+            className="w-full rounded-xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] hover:brightness-110"
           >
             Actualizar contraseña
           </button>
@@ -83,7 +83,7 @@ export default async function CuentaPage({
         <form action={logoutAction}>
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-surface py-3 text-sm font-semibold text-text-muted shadow-sm shadow-black/[0.03] transition-all active:scale-[0.98] hover:text-text"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-surface py-3 text-sm font-semibold text-text-muted shadow-card transition-all active:scale-[0.98] hover:text-text"
           >
             <IconLogout className="h-4 w-4" />
             Cerrar sesión

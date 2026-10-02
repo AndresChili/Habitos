@@ -55,7 +55,7 @@ export default function HabitActions({
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => archiveHabitAction(id))}
-        className={`${pill} hover:bg-danger/10 hover:text-danger disabled:opacity-50`}
+        className={`${pill} bg-danger/10 text-danger hover:bg-danger/15 disabled:opacity-50`}
       >
         Eliminar
       </button>

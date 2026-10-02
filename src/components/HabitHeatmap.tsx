@@ -1,7 +1,7 @@
 import type { HeatCell } from "@/lib/habits";
 
 const STATE_CLASS: Record<HeatCell["state"], string> = {
-  done: "bg-accent",
+  done: "bg-gradient-to-br from-accent to-accent-2",
   missed: "bg-warn-soft border border-warn/50",
   today_pending: "border-2 border-accent",
   not_scheduled: "bg-surface-muted",
@@ -10,7 +10,7 @@ const STATE_CLASS: Record<HeatCell["state"], string> = {
 
 export default function HabitHeatmap({ cells }: { cells: HeatCell[] }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]">
+    <div className="rounded-2xl border border-border bg-surface p-4 shadow-card">
       <div className="overflow-x-auto pb-1">
         <div className="grid w-max grid-flow-col grid-rows-7 gap-[3px]">
           {cells.map((c) => (

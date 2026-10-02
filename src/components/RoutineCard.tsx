@@ -26,7 +26,7 @@ export default function RoutineCard({
   }
 
   return (
-    <div className="space-y-2.5 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]">
+    <div className="space-y-2.5 rounded-2xl border border-border bg-surface p-4 shadow-card">
       <div>
         <p className="font-medium text-text">{name}</p>
         {description && <p className="mt-0.5 text-xs text-text-faint">{description}</p>}
@@ -39,7 +39,7 @@ export default function RoutineCard({
         <form action={startWorkoutAction.bind(null, id)} className="flex-1">
           <button
             type="submit"
-            className="w-full rounded-lg bg-accent-soft py-1.5 text-xs font-semibold text-accent-strong transition-all active:scale-95"
+            className="w-full rounded-lg bg-gradient-to-br from-accent to-accent-2 py-1.5 text-xs font-semibold text-accent-on shadow-glow transition-all active:scale-95"
           >
             Entrenar
           </button>

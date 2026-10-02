@@ -12,7 +12,7 @@ export default async function PesoPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-text">Peso</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-text">Peso</h1>
         <p className="text-sm text-text-muted">El registro del día se hace desde &ldquo;Hoy&rdquo;.</p>
       </header>
 
@@ -30,7 +30,7 @@ export default async function PesoPage() {
               {ordered.map((w) => (
                 <div
                   key={w.id}
-                  className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm shadow-sm shadow-black/[0.02]"
+                  className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm shadow-card"
                 >
                   <span className="capitalize text-text-muted">{format(parseISO(w.date), "EEEE, d MMM", { locale: es })}</span>
                   <span className="font-semibold text-text">{w.weightKg} kg</span>

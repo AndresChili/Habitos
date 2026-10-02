@@ -19,7 +19,7 @@ function SetTypePicker({ value, onChange }: { value: SetType; onChange: (t: SetT
           type="button"
           onClick={() => onChange(t)}
           className={`rounded-lg px-2 py-1 text-[10px] font-medium transition-all ${
-            value === t ? "bg-accent text-accent-on" : "bg-surface-muted text-text-faint"
+            value === t ? "bg-gradient-to-br from-accent to-accent-2 text-accent-on" : "bg-surface-muted text-text-faint"
           }`}
         >
           {SET_TYPE_SHORT[t]}
@@ -54,7 +54,7 @@ function ExistingSetRow({
         <button
           type="button"
           onClick={() => startTransition(async () => { await deleteSetAction(set.id, sessionId); onChanged(null); })}
-          className="text-xs text-text-faint hover:text-danger"
+          className="text-xs text-danger/70 hover:text-danger"
         >
           Quitar
         </button>
@@ -97,7 +97,7 @@ function ExistingSetRow({
               }
             })
           }
-          className="flex-1 rounded-lg bg-accent py-1.5 text-xs font-semibold text-accent-on disabled:opacity-50"
+          className="flex-1 rounded-lg bg-gradient-to-br from-accent to-accent-2 py-1.5 text-xs font-semibold text-accent-on disabled:opacity-50"
         >
           Guardar
         </button>
@@ -176,7 +176,7 @@ export default function WorkoutExerciseCard({
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]">
+    <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-card">
       <div>
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -189,7 +189,7 @@ export default function WorkoutExerciseCard({
             type="button"
             disabled={removing}
             onClick={removeFromSession}
-            className="shrink-0 text-xs text-text-faint hover:text-danger disabled:opacity-50"
+            className="shrink-0 text-xs text-danger/70 hover:text-danger disabled:opacity-50"
           >
             Quitar de hoy
           </button>
@@ -237,7 +237,7 @@ export default function WorkoutExerciseCard({
           <button
             type="submit"
             disabled={pending || !weight.trim() || !reps.trim()}
-            className="ml-auto shrink-0 rounded-lg bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-on disabled:opacity-50"
+            className="ml-auto shrink-0 rounded-lg bg-gradient-to-br from-accent to-accent-2 px-3.5 py-1.5 text-xs font-semibold text-accent-on disabled:opacity-50"
           >
             + Serie
           </button>

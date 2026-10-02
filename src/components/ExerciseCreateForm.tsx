@@ -47,7 +47,7 @@ export default function ExerciseCreateForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]">
+    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-card">
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -98,7 +98,7 @@ export default function ExerciseCreateForm() {
         <button
           type="submit"
           disabled={pending || !name.trim()}
-          className="flex-1 rounded-xl bg-accent py-2.5 text-sm font-semibold text-accent-on shadow-sm shadow-black/10 transition-all active:scale-[0.98] disabled:opacity-50"
+          className="flex-1 rounded-xl bg-gradient-to-br from-accent to-accent-2 py-2.5 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
         >
           Crear
         </button>

@@ -30,7 +30,7 @@ export default async function EjercicioDetailPage({ params }: { params: Promise<
           Ejercicios
         </Link>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-text">{exercise.name}</h1>
+          <h1 className="text-[26px] font-bold tracking-tight text-text">{exercise.name}</h1>
           <p className="mt-0.5 text-sm text-text-muted">
             {MUSCLE_LABELS[exercise.primaryMuscle]} · {EQUIPMENT_LABELS[exercise.equipment]}
           </p>

@@ -17,7 +17,7 @@ export default async function EjerciciosPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-text">Gimnasio</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-text">Gimnasio</h1>
         <p className="text-sm text-text-muted">Biblioteca de ejercicios.</p>
       </header>
 
@@ -31,7 +31,7 @@ export default async function EjerciciosPage() {
               <Link
                 key={e.id}
                 href={`/gimnasio/ejercicios/${e.id}`}
-                className="flex items-center justify-between rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-sm shadow-black/[0.02] transition-colors hover:border-accent"
+                className="flex items-center justify-between rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-card transition-colors hover:border-accent"
               >
                 <span className="text-text">{e.name}</span>
                 <span className="text-xs text-text-faint">{EQUIPMENT_LABELS[e.equipment]}</span>

@@ -26,13 +26,13 @@ export default async function RutinaPage({ params }: { params: Promise<{ id: str
           </svg>
           Gimnasio
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight text-text">Editar rutina</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-text">Editar rutina</h1>
       </header>
 
       <form action={startWorkoutAction.bind(null, routine.id)}>
         <button
           type="submit"
-          className="w-full rounded-2xl bg-accent py-3 text-sm font-semibold text-accent-on shadow-sm shadow-black/10 transition-all active:scale-[0.98] hover:bg-accent-strong"
+          className="w-full rounded-2xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] hover:brightness-110"
         >
           Empezar entrenamiento
         </button>

@@ -22,7 +22,7 @@ export default async function EditarHabitoPage({ params }: { params: Promise<{ i
           </svg>
           Hábitos
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight text-text">Editar hábito</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-text">Editar hábito</h1>
       </header>
 
       <HabitForm

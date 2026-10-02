@@ -42,7 +42,7 @@ export default function AddExerciseToRoutine({ routineId, exercises }: { routine
   }
 
   return (
-    <div className="space-y-2.5 rounded-2xl border border-border bg-surface p-3 shadow-sm shadow-black/[0.03]">
+    <div className="space-y-2.5 rounded-2xl border border-border bg-surface p-3 shadow-card">
       <div className="flex items-center gap-2">
         <input
           value={query}

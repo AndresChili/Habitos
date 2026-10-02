@@ -65,7 +65,7 @@ export default function ActiveWorkout({
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => finishWorkoutAction(sessionId))}
-        className="w-full rounded-2xl bg-accent py-3.5 text-sm font-semibold text-accent-on shadow-sm shadow-black/10 transition-all active:scale-[0.98] disabled:opacity-50"
+        className="w-full rounded-2xl bg-gradient-to-br from-accent to-accent-2 py-3.5 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
       >
         Finalizar entrenamiento
       </button>

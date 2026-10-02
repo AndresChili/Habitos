@@ -38,7 +38,7 @@ export default async function HabitDetailPage({ params }: { params: Promise<{ id
           Hábitos
         </Link>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-text">{detail.name}</h1>
+          <h1 className="text-[26px] font-bold tracking-tight text-text">{detail.name}</h1>
           <p className="mt-0.5 text-sm text-text-muted">
             {detail.kind === "FIXED_DAYS"
               ? detail.weekdays.length === 7
@@ -70,7 +70,7 @@ export default async function HabitDetailPage({ params }: { params: Promise<{ id
           <HabitHeatmap cells={detail.cells} />
           <div className="flex flex-wrap gap-x-4 gap-y-1.5 px-1 text-xs text-text-faint">
             <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-[4px] bg-accent" /> cumplido
+              <span className="h-3 w-3 rounded-[4px] bg-gradient-to-br from-accent to-accent-2" /> cumplido
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-3 w-3 rounded-[4px] border border-warn/50 bg-warn-soft" /> fallado
@@ -90,12 +90,12 @@ export default async function HabitDetailPage({ params }: { params: Promise<{ id
             {detail.periods.map((p) => (
               <div
                 key={p.label}
-                className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-sm shadow-black/[0.02]"
+                className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm shadow-card"
               >
                 <span className="w-16 shrink-0 text-xs capitalize text-text-faint">{p.label}</span>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-muted">
                   <div
-                    className={`h-full rounded-full transition-all ${p.met ? "bg-accent" : "bg-warn-soft"}`}
+                    className={`h-full rounded-full transition-all ${p.met ? "bg-gradient-to-br from-accent to-accent-2" : "bg-warn-soft"}`}
                     style={{ width: `${Math.min(100, (p.done / p.target) * 100)}%` }}
                   />
                 </div>

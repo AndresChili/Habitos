@@ -22,10 +22,10 @@ export default async function LoginPage({
       <div className="w-full max-w-xs space-y-8">
         <form
           action={loginAction}
-          className="space-y-5 rounded-2xl border border-border bg-surface p-6 shadow-sm shadow-black/[0.04]"
+          className="space-y-5 rounded-2xl border border-border bg-surface p-6 shadow-card"
         >
           <div className="space-y-2 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft text-accent shadow-sm shadow-black/[0.03]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
               <IconHabits className="h-6 w-6" />
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-text">Hábitos</h1>
@@ -58,7 +58,7 @@ export default async function LoginPage({
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-accent-on shadow-sm shadow-black/10 transition-all active:scale-[0.98] hover:bg-accent-strong"
+            className="w-full rounded-xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] hover:brightness-110"
           >
             Entrar
           </button>

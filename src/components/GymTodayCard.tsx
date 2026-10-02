@@ -34,8 +34,8 @@ export default function GymTodayCard({
   if (status.session) {
     if (status.session.status === "COMPLETED") {
       return (
-        <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-sm shadow-black/[0.03]">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+        <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-card">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
             <IconGym className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
@@ -55,8 +55,8 @@ export default function GymTodayCard({
       );
     }
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-sm shadow-black/[0.03]">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+      <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-card">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
           <IconGym className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
@@ -74,7 +74,7 @@ export default function GymTodayCard({
         </button>
         <Link
           href={`/gimnasio/entrenar/${status.session.id}`}
-          className="shrink-0 rounded-xl bg-accent px-3.5 py-2 text-xs font-semibold text-accent-on shadow-sm shadow-black/10"
+          className="shrink-0 rounded-xl bg-gradient-to-br from-accent to-accent-2 px-3.5 py-2 text-xs font-semibold text-accent-on shadow-glow"
         >
           Continuar
         </Link>
@@ -88,9 +88,9 @@ export default function GymTodayCard({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-left shadow-sm shadow-black/[0.03] transition-colors hover:border-accent"
+        className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 text-left shadow-card transition-colors hover:border-accent"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
           <IconGym className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
@@ -107,9 +107,9 @@ export default function GymTodayCard({
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]">
+    <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-card">
       <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
           <IconGym className="h-4 w-4" />
         </span>
         <p className="text-sm font-medium text-text">Gimnasio hoy</p>
@@ -122,7 +122,7 @@ export default function GymTodayCard({
               type="button"
               disabled={pending}
               onClick={() => startTransition(() => startWorkoutAction(status.assignedRoutine!.id))}
-              className="w-full rounded-xl bg-accent py-2.5 text-sm font-semibold text-accent-on shadow-sm shadow-black/10 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full rounded-xl bg-gradient-to-br from-accent to-accent-2 py-2.5 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
             >
               Empezar {status.assignedRoutine.name}
             </button>

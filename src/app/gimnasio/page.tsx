@@ -13,7 +13,7 @@ export default async function GimnasioPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-text">Gimnasio</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-text">Gimnasio</h1>
         <p className="text-sm text-text-muted">Tus rutinas y entrenamientos.</p>
       </header>
 

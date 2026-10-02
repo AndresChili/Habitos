@@ -122,7 +122,7 @@ export default function RoutineExerciseList({
       {list.map((item, index) => (
         <div
           key={item.id}
-          className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 shadow-sm shadow-black/[0.02]"
+          className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 shadow-card"
         >
           <div className="flex flex-col">
             <button
@@ -158,7 +158,7 @@ export default function RoutineExerciseList({
           <button
             type="button"
             onClick={() => remove(item.id)}
-            className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-text-faint hover:bg-danger/10 hover:text-danger"
+            className="shrink-0 rounded-lg bg-danger/10 px-2 py-1 text-xs font-medium text-danger hover:bg-danger/15"
           >
             Quitar
           </button>

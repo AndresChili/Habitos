@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function HabitosTabs({ active }: { active: "gestionar" | "estadisticas" }) {
   const tabClass = (tab: "gestionar" | "estadisticas") =>
     `flex-1 rounded-lg py-2 text-center text-sm font-medium transition-all ${
-      active === tab ? "bg-surface text-text shadow-sm shadow-black/[0.04]" : "text-text-muted"
+      active === tab ? "bg-surface text-text shadow-card" : "text-text-muted"
     }`;
 
   return (

@@ -19,7 +19,7 @@ export default async function HabitosPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-text">Hábitos</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-text">Hábitos</h1>
         <p className="text-sm text-text-muted">Gestiona tus hábitos y su recurrencia.</p>
       </header>
 
@@ -34,7 +34,7 @@ export default async function HabitosPage() {
             {fixed.map((h) => (
               <div
                 key={h.id}
-                className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-sm shadow-black/[0.03]"
+                className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-card"
               >
                 <div>
                   <p className="font-medium text-text">{h.name}</p>

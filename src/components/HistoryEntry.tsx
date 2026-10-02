@@ -30,7 +30,7 @@ export default function HistoryEntry({
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3.5 py-2.5 shadow-sm shadow-black/[0.02]">
+    <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3.5 py-2.5 shadow-card">
       <div className="min-w-0 flex-1">
         <p className="text-xs capitalize text-text-faint">{dateLabel}</p>
         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-text">

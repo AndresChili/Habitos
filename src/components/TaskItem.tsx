@@ -32,7 +32,7 @@ export default function TaskItem({
             setEditing(false);
           });
         }}
-        className="flex items-center gap-2 rounded-2xl border border-accent/40 bg-surface px-3 py-2.5 shadow-sm shadow-black/[0.03]"
+        className="flex items-center gap-2 rounded-2xl border border-accent/40 bg-surface px-3 py-2.5 shadow-card"
       >
         <input
           value={editTitle}
@@ -58,7 +58,7 @@ export default function TaskItem({
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-sm shadow-sm shadow-black/[0.03] transition-colors ${
+      className={`flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-sm shadow-card transition-colors ${
         done ? "border-border bg-surface-muted text-text-faint" : "border-border bg-surface text-text"
       }`}
     >
@@ -83,7 +83,7 @@ export default function TaskItem({
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => deleteTaskAction(id))}
-        className="shrink-0 text-text-faint transition-all hover:text-danger active:scale-90 disabled:opacity-50"
+        className="shrink-0 text-danger/70 transition-all hover:text-danger active:scale-90 disabled:opacity-50"
         aria-label="Eliminar tarea"
       >
         <IconTrash />

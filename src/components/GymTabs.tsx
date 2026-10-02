@@ -5,7 +5,7 @@ type Tab = "rutinas" | "ejercicios" | "records";
 export default function GymTabs({ active }: { active: Tab }) {
   const tabClass = (tab: Tab) =>
     `flex-1 rounded-lg py-2 text-center text-sm font-medium transition-all ${
-      active === tab ? "bg-surface text-text shadow-sm shadow-black/[0.04]" : "text-text-muted"
+      active === tab ? "bg-surface text-text shadow-card" : "text-text-muted"
     }`;
 
   return (

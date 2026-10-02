@@ -10,7 +10,7 @@ export default async function RecordsPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-text">Gimnasio</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-text">Gimnasio</h1>
         <p className="text-sm text-text-muted">Tus récords personales.</p>
       </header>
 
@@ -26,7 +26,7 @@ export default async function RecordsPage() {
             <Link
               key={pr.exerciseId}
               href={`/gimnasio/ejercicios/${pr.exerciseId}`}
-              className="block space-y-2 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03] transition-colors hover:border-accent"
+              className="block space-y-2 rounded-2xl border border-border bg-surface p-4 shadow-card transition-colors hover:border-accent"
             >
               <p className="font-medium text-text">{pr.exerciseName}</p>
               <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-text-faint">

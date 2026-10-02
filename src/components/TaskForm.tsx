@@ -23,7 +23,7 @@ export default function TaskForm({ date }: { date: string }) {
   return (
     <form
       onSubmit={submit}
-      className="flex items-center gap-2 rounded-2xl border border-border bg-surface p-1.5 pl-4 shadow-sm shadow-black/[0.03] focus-within:border-accent"
+      className="flex items-center gap-2 rounded-2xl border border-border bg-surface p-1.5 pl-4 shadow-card focus-within:border-accent"
     >
       <input
         value={title}
@@ -40,7 +40,7 @@ export default function TaskForm({ date }: { date: string }) {
       <button
         type="submit"
         disabled={pending || !title.trim()}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-on transition-all active:scale-90 disabled:opacity-40"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-2 text-accent-on transition-all active:scale-90 disabled:opacity-40"
         aria-label="Añadir tarea"
       >
         <IconPlus />

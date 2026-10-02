@@ -35,7 +35,7 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
   if (secondsLeft <= 0) return null;
 
   return (
-    <div className="sticky top-2 z-10 flex items-center gap-3 rounded-2xl border border-accent/30 bg-accent-soft px-4 py-2.5 shadow-sm shadow-black/[0.04]">
+    <div className="sticky top-2 z-10 flex items-center gap-3 rounded-2xl border border-accent/30 bg-accent-soft px-4 py-2.5 shadow-card">
       <span className="text-sm font-semibold tabular-nums text-accent-strong">{formatTime(secondsLeft)}</span>
       <span className="text-xs text-accent-strong/80">Descanso</span>
       <div className="ml-auto flex items-center gap-1.5">

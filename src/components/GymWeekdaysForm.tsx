@@ -19,7 +19,7 @@ export default function GymWeekdaysForm({ initial }: { initial: number[] }) {
   }
 
   return (
-    <div className="space-y-2.5 rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-black/[0.03]">
+    <div className="space-y-2.5 rounded-2xl border border-border bg-surface p-4 shadow-card">
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Días de entrenamiento</h2>
         {pending ? (

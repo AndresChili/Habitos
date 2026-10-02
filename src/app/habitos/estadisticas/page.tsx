@@ -19,7 +19,7 @@ export default async function HabitosEstadisticasPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-text">Hábitos</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-text">Hábitos</h1>
         <p className="text-sm text-text-muted">Vista general de tu progreso.</p>
       </header>
 

@@ -32,9 +32,9 @@ export default function WeightQuickInput({
   return (
     <form
       onSubmit={submit}
-      className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-sm shadow-black/[0.03] focus-within:border-accent"
+      className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-card focus-within:border-accent"
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-strong">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
         <IconWeight className="h-4 w-4" />
       </span>
       <span className="shrink-0 text-sm font-medium text-text-muted">Peso de hoy</span>
@@ -55,7 +55,7 @@ export default function WeightQuickInput({
       <button
         type="submit"
         disabled={pending || !value.trim()}
-        className="ml-auto shrink-0 rounded-xl bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-on transition-all active:scale-95 disabled:opacity-50"
+        className="ml-auto shrink-0 rounded-xl bg-gradient-to-br from-accent to-accent-2 px-3.5 py-1.5 text-xs font-semibold text-accent-on transition-all active:scale-95 disabled:opacity-50"
       >
         {saved ? "Guardado" : "Guardar"}
       </button>

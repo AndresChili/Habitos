@@ -19,7 +19,7 @@ export default function HabitStatRow({ detail }: { detail: HabitDetail }) {
   return (
     <Link
       href={`/habitos/${detail.id}`}
-      className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-sm shadow-black/[0.03] transition-all active:scale-[0.98] hover:border-text-faint/40"
+      className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-card transition-all active:scale-[0.98] hover:border-text-faint/40"
     >
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-text">{detail.name}</p>

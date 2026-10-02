@@ -37,7 +37,7 @@ export default function ThemeToggle() {
   }
 
   return (
-    <div className="flex gap-1.5 rounded-2xl border border-border bg-surface p-1.5 shadow-sm shadow-black/[0.03]">
+    <div className="flex gap-1.5 rounded-2xl border border-border bg-surface p-1.5 shadow-card">
       {OPTIONS.map(({ value, label, icon: Icon }) => (
         <button
           key={value}
@@ -46,7 +46,7 @@ export default function ThemeToggle() {
           aria-pressed={theme === value}
           className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-colors ${
             theme === value
-              ? "bg-accent text-accent-on"
+              ? "bg-gradient-to-br from-accent to-accent-2 text-accent-on"
               : "text-text-muted hover:text-text"
           }`}
         >
