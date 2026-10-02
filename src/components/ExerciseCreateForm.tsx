@@ -6,7 +6,7 @@ import { createExerciseAction } from "@/app/gym-actions";
 import { EQUIPMENT_LABELS, MUSCLE_LABELS, MUSCLE_ORDER } from "@/lib/gymLabels";
 import type { Equipment, MuscleGroup } from "@/generated/prisma/client";
 
-const EQUIPMENT_ORDER: Equipment[] = ["BARBELL", "DUMBBELL", "MACHINE", "CABLE", "BODYWEIGHT", "KETTLEBELL", "BAND", "OTHER"];
+const EQUIPMENT_ORDER: Equipment[] = ["BARBELL", "DUMBBELL", "MACHINE", "CABLE", "BODYWEIGHT"];
 
 export default function ExerciseCreateForm() {
   const router = useRouter();

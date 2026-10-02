@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   removeExerciseFromRoutineAction,
   reorderRoutineExercisesAction,
@@ -92,6 +92,8 @@ export default function RoutineExerciseList({
 }) {
   const [list, setList] = useState(items);
   const [, startTransition] = useTransition();
+
+  useEffect(() => setList(items), [items]);
 
   function persistOrder(next: RoutineExerciseItem[]) {
     setList(next);

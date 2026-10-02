@@ -48,7 +48,7 @@ export default function RoutineCard({
           href={`/gimnasio/rutinas/${id}`}
           className="rounded-lg px-2 py-1.5 text-xs font-medium transition-all hover:bg-surface-muted hover:text-text-muted active:scale-95"
         >
-          Editar
+          Ver
         </Link>
         <button
           type="button"

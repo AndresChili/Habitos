@@ -6,12 +6,10 @@ export const MUSCLE_LABELS: Record<MuscleGroup, string> = {
   SHOULDERS: "Hombros",
   BICEPS: "Bíceps",
   TRICEPS: "Tríceps",
-  LEGS: "Piernas",
+  FEMORAL: "Femoral",
+  CUADRICEPS: "Cuádriceps",
   GLUTES: "Glúteos",
-  CORE: "Core",
-  FOREARMS: "Antebrazos",
-  FULL_BODY: "Cuerpo completo",
-  OTHER: "Otro",
+  ABDOMINALES: "Abdominales",
 };
 
 export const EQUIPMENT_LABELS: Record<Equipment, string> = {
@@ -20,9 +18,6 @@ export const EQUIPMENT_LABELS: Record<Equipment, string> = {
   MACHINE: "Máquina",
   CABLE: "Polea",
   BODYWEIGHT: "Peso corporal",
-  KETTLEBELL: "Kettlebell",
-  BAND: "Banda",
-  OTHER: "Otro",
 };
 
 export const SET_TYPE_LABELS: Record<SetType, string> = {
@@ -51,10 +46,8 @@ export const MUSCLE_ORDER: MuscleGroup[] = [
   "SHOULDERS",
   "BICEPS",
   "TRICEPS",
-  "LEGS",
+  "CUADRICEPS",
+  "FEMORAL",
   "GLUTES",
-  "CORE",
-  "FOREARMS",
-  "FULL_BODY",
-  "OTHER",
+  "ABDOMINALES",
 ];

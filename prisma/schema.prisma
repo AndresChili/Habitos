@@ -152,12 +152,10 @@ enum MuscleGroup {
   SHOULDERS
   BICEPS
   TRICEPS
-  LEGS
+  FEMORAL
+  CUADRICEPS
   GLUTES
-  CORE
-  FOREARMS
-  FULL_BODY
-  OTHER
+  ABDOMINALES
 }
 
 enum Equipment {
@@ -166,9 +164,6 @@ enum Equipment {
   MACHINE
   CABLE
   BODYWEIGHT
-  KETTLEBELL
-  BAND
-  OTHER
 }
 
 enum SetType {
@@ -194,7 +189,7 @@ model Exercise {
   name             String
   primaryMuscle    MuscleGroup
   secondaryMuscles MuscleGroup[] @default([])
-  equipment        Equipment     @default(OTHER)
+  equipment        Equipment     @default(BARBELL)
   instructions     String?
   archivedAt       DateTime?
   createdAt        DateTime      @default(now())
