@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getFixedHabitsForDate, getSettingsTz } from "@/lib/habits";
 import { listTasksForDate } from "@/lib/tasks";
 import { getLatestWeightBefore, getWeightForDate } from "@/lib/weight";
@@ -10,6 +11,7 @@ import TaskItem from "@/components/TaskItem";
 import WeightQuickInput from "@/components/WeightQuickInput";
 import DateNav from "@/components/DateNav";
 import GymTodayCard from "@/components/GymTodayCard";
+import { IconClock, IconGym, IconWeight } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +32,8 @@ export default async function TodayPage({
     date === todayKey ? getTodayGymStatus() : Promise.resolve(null),
   ]);
 
-  const suggestedWeight =
-    date === todayKey && weight === null ? await getLatestWeightBefore(date) : null;
+  const previousWeight = date === todayKey ? await getLatestWeightBefore(date) : null;
+  const suggestedWeight = weight === null ? previousWeight : null;
 
   const otherRoutines =
     gymStatus?.scheduled && !gymStatus.session
@@ -39,10 +41,49 @@ export default async function TodayPage({
       : [];
 
   const habitsDone = habits.filter((h) => h.done).length;
+  const pendingTasks = tasks.filter((t) => !t.done).length;
+  const gymChipLabel =
+    gymStatus?.scheduled && gymStatus.session
+      ? gymStatus.session.routineName
+      : gymStatus?.scheduled && gymStatus.assignedRoutine
+        ? gymStatus.assignedRoutine.name
+        : "Sin rutina";
 
   return (
     <div className="space-y-8">
       <DateNav date={date} todayKey={todayKey} habitsDone={habitsDone} habitsTotal={habits.length} />
+
+      {date === todayKey && (gymStatus?.scheduled || weight !== null || tasks.length > 0) && (
+        <div className="flex gap-2.5">
+          {gymStatus?.scheduled && (
+            <Link href="/gimnasio" className="flex-1 rounded-2xl border border-border bg-surface p-3 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card-hover">
+              <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[9px] bg-gradient-to-br from-violet to-violet-2 text-violet-on">
+                <IconGym className="h-3.5 w-3.5" />
+              </span>
+              <p className="mt-1.5 text-[11px] font-semibold text-text-faint">Gimnasio</p>
+              <p className="truncate text-sm font-bold text-text">{gymChipLabel}</p>
+            </Link>
+          )}
+          <Link href="/peso" className="flex-1 rounded-2xl border border-border bg-surface p-3 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card-hover">
+            <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[9px] bg-gradient-to-br from-rose to-rose-2 text-rose-on">
+              <IconWeight className="h-3.5 w-3.5" />
+            </span>
+            <p className="mt-1.5 text-[11px] font-semibold text-text-faint">Peso</p>
+            <p className="truncate text-sm font-bold text-text">
+              {weight?.weightKg ?? suggestedWeight?.weightKg ?? "—"} <span className="text-xs font-semibold text-text-faint">kg</span>
+            </p>
+          </Link>
+          <div className="flex-1 rounded-2xl border border-border bg-surface p-3 shadow-card">
+            <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[9px] bg-gradient-to-br from-blue to-blue-2 text-blue-on">
+              <IconClock className="h-3.5 w-3.5" />
+            </span>
+            <p className="mt-1.5 text-[11px] font-semibold text-text-faint">Tareas</p>
+            <p className="truncate text-sm font-bold text-text">
+              {pendingTasks === 0 ? "Al día" : `${pendingTasks} pendiente${pendingTasks === 1 ? "" : "s"}`}
+            </p>
+          </div>
+        </div>
+      )}
 
       {gymStatus && <GymTodayCard status={gymStatus} otherRoutines={otherRoutines} />}
 
@@ -51,6 +92,7 @@ export default async function TodayPage({
           date={date}
           initialWeight={weight?.weightKg ?? null}
           suggestedWeight={suggestedWeight?.weightKg ?? null}
+          previousWeight={previousWeight?.weightKg ?? null}
         />
       )}
 

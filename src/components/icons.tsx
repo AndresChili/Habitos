@@ -117,6 +117,15 @@ export function IconMoon({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
+export function IconClock({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className={className}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function IconFlame({ className = "h-3 w-3" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor">

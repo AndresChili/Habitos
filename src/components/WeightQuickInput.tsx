@@ -8,16 +8,21 @@ export default function WeightQuickInput({
   date,
   initialWeight,
   suggestedWeight = null,
+  previousWeight = null,
 }: {
   date: string;
   initialWeight: number | null;
   suggestedWeight?: number | null;
+  previousWeight?: number | null;
 }) {
   const [value, setValue] = useState(initialWeight?.toString() ?? suggestedWeight?.toString() ?? "");
   const [saved, setSaved] = useState(initialWeight !== null);
   const [isSuggestion, setIsSuggestion] = useState(initialWeight === null && suggestedWeight !== null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const delta =
+    initialWeight !== null && previousWeight !== null ? Math.round((initialWeight - previousWeight) * 10) / 10 : null;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,6 +57,16 @@ export default function WeightQuickInput({
         }`}
       />
       <span className="shrink-0 text-sm text-text-faint">kg</span>
+      {delta !== null && delta !== 0 && (
+        <span
+          className={`shrink-0 rounded-lg px-2 py-1 text-xs font-bold ${
+            delta < 0 ? "bg-accent-soft text-accent-strong" : "bg-danger/10 text-danger"
+          }`}
+        >
+          {delta > 0 ? "+" : ""}
+          {delta}
+        </span>
+      )}
       <button
         type="submit"
         disabled={pending || !value.trim()}

@@ -28,28 +28,17 @@ export default function DateNav({
 
   return (
     <header className="flex items-center justify-between gap-2">
-      <button
-        type="button"
-        onClick={() => go(format(addDays(parsed, -1), "yyyy-MM-dd"))}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-muted transition-all hover:bg-surface-muted active:scale-90"
-        aria-label="Día anterior"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-          <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
       <div
         role="button"
         tabIndex={0}
         onClick={() => dateInputRef.current?.showPicker?.()}
         onKeyDown={(e) => e.key === "Enter" && dateInputRef.current?.showPicker?.()}
-        className="relative min-w-0 flex-1 cursor-pointer rounded-xl px-2 py-1 text-center transition-colors hover:bg-surface-muted active:scale-[0.98]"
+        className="relative min-w-0 flex-1 cursor-pointer rounded-xl py-1 text-left transition-colors active:scale-[0.99]"
       >
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-text-faint">
+        <p className="text-[13px] font-semibold text-text-faint">
           {isToday ? "Hoy" : format(parsed, "yyyy") !== format(new Date(), "yyyy") ? format(parsed, "yyyy") : " "}
         </p>
-        <h1 className="truncate text-xl font-semibold capitalize tracking-tight text-text">{label}</h1>
+        <h1 className="truncate text-[26px] font-bold capitalize tracking-tight text-text">{label}</h1>
         <input
           ref={dateInputRef}
           type="date"
@@ -62,11 +51,22 @@ export default function DateNav({
 
       <button
         type="button"
+        onClick={() => go(format(addDays(parsed, -1), "yyyy-MM-dd"))}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-faint transition-all hover:bg-surface-muted active:scale-90"
+        aria-label="Día anterior"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
+          <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
         onClick={() => go(format(addDays(parsed, 1), "yyyy-MM-dd"))}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-muted transition-all hover:bg-surface-muted active:scale-90"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-faint transition-all hover:bg-surface-muted active:scale-90"
         aria-label="Día siguiente"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
           <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
