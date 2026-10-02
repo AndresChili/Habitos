@@ -37,44 +37,49 @@ export default function WeightQuickInput({
   return (
     <form
       onSubmit={submit}
-      className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-card focus-within:border-rose"
+      className="space-y-2 rounded-2xl border border-border bg-surface px-4 py-3 shadow-card focus-within:border-rose"
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose to-rose-2 text-rose-on shadow-glow-rose">
-        <IconWeight className="h-4 w-4" />
-      </span>
-      <span className="shrink-0 text-sm font-medium text-text-muted">Peso de hoy</span>
-      <input
-        inputMode="decimal"
-        value={value}
-        onChange={(e) => {
-          setValue(e.target.value);
-          setSaved(false);
-          setIsSuggestion(false);
-        }}
-        placeholder="72.4"
-        className={`w-16 border-0 border-b border-border bg-transparent py-0.5 text-right text-sm outline-none focus:border-rose ${
-          isSuggestion ? "text-text-faint" : "text-text"
-        }`}
-      />
-      <span className="shrink-0 text-sm text-text-faint">kg</span>
-      {delta !== null && delta !== 0 && (
-        <span
-          className={`shrink-0 rounded-lg px-2 py-1 text-xs font-bold ${
-            delta < 0 ? "bg-accent-soft text-accent-strong" : "bg-danger/10 text-danger"
-          }`}
-        >
-          {delta > 0 ? "+" : ""}
-          {delta}
+      <div className="flex items-center gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose to-rose-2 text-rose-on shadow-glow-rose">
+          <IconWeight className="h-4 w-4" />
         </span>
-      )}
-      <button
-        type="submit"
-        disabled={pending || !value.trim()}
-        className="ml-auto shrink-0 rounded-xl bg-gradient-to-br from-rose to-rose-2 px-3.5 py-1.5 text-xs font-semibold text-rose-on shadow-glow-rose transition-all active:scale-95 disabled:opacity-50"
-      >
-        {saved ? "Guardado" : "Guardar"}
-      </button>
-      {error && <p className="text-xs text-danger">{error}</p>}
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-text-muted">Peso de hoy</span>
+        <input
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setSaved(false);
+            setIsSuggestion(false);
+          }}
+          placeholder="72.4"
+          className={`w-16 shrink-0 border-0 border-b border-border bg-transparent py-0.5 text-right text-sm outline-none focus:border-rose ${
+            isSuggestion ? "text-text-faint" : "text-text"
+          }`}
+        />
+        <span className="shrink-0 text-sm text-text-faint">kg</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {delta !== null && delta !== 0 && (
+          <span
+            className={`shrink-0 rounded-lg px-2 py-1 text-xs font-bold ${
+              delta < 0 ? "bg-accent-soft text-accent-strong" : "bg-danger/10 text-danger"
+            }`}
+          >
+            {delta > 0 ? "+" : ""}
+            {delta}
+          </span>
+        )}
+        {error && <p className="min-w-0 flex-1 truncate text-xs text-danger">{error}</p>}
+        <button
+          type="submit"
+          disabled={pending || !value.trim()}
+          className="ml-auto shrink-0 rounded-xl bg-gradient-to-br from-rose to-rose-2 px-3.5 py-1.5 text-xs font-semibold text-rose-on shadow-glow-rose transition-all active:scale-95 disabled:opacity-50"
+        >
+          {saved ? "Guardado" : "Guardar"}
+        </button>
+      </div>
     </form>
   );
 }
