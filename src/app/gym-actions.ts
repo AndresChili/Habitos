@@ -17,6 +17,8 @@ import { updateGymWeekdays } from "@/lib/settings";
 import {
   addExerciseToSession,
   addSet,
+  deleteHistoryEntry,
+  deleteSession,
   deleteSet,
   finishSession,
   removeExerciseFromSession,
@@ -153,6 +155,13 @@ export async function finishWorkoutAction(sessionId: string) {
   redirect("/gimnasio");
 }
 
+export async function deleteSessionAction(sessionId: string) {
+  await deleteSession(sessionId);
+  revalidatePath("/gimnasio");
+  revalidatePath("/gimnasio/records");
+  revalidatePath("/");
+}
+
 export async function addExerciseToSessionAction(sessionId: string, exerciseId: string) {
   const result = await addExerciseToSession(sessionId, exerciseId);
   revalidatePath(`/gimnasio/entrenar/${sessionId}`);
@@ -162,4 +171,10 @@ export async function addExerciseToSessionAction(sessionId: string, exerciseId: 
 export async function removeExerciseFromSessionAction(workoutExerciseId: string, sessionId: string) {
   await removeExerciseFromSession(workoutExerciseId);
   revalidatePath(`/gimnasio/entrenar/${sessionId}`);
+}
+
+export async function deleteHistoryEntryAction(workoutExerciseId: string, exerciseId: string) {
+  await deleteHistoryEntry(workoutExerciseId);
+  revalidatePath(`/gimnasio/ejercicios/${exerciseId}`);
+  revalidatePath("/gimnasio/records");
 }

@@ -5,7 +5,8 @@ import { notFound } from "next/navigation";
 import { getExercise } from "@/lib/exercises";
 import { computeExercisePRs, listExerciseHistory } from "@/lib/workouts";
 import StatTile from "@/components/StatTile";
-import { EQUIPMENT_LABELS, MUSCLE_LABELS, SET_TYPE_SHORT } from "@/lib/gymLabels";
+import HistoryEntry from "@/components/HistoryEntry";
+import { EQUIPMENT_LABELS, MUSCLE_LABELS } from "@/lib/gymLabels";
 
 export const dynamic = "force-dynamic";
 
@@ -69,19 +70,13 @@ export default async function EjercicioDetailPage({ params }: { params: Promise<
             <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Historial</h2>
             <div className="space-y-2">
               {history.map((entry) => (
-                <div key={entry.id} className="rounded-xl border border-border bg-surface px-3.5 py-2.5 shadow-sm shadow-black/[0.02]">
-                  <p className="text-xs capitalize text-text-faint">
-                    {format(entry.workoutSession.startedAt, "EEEE, d MMM", { locale: es })}
-                  </p>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-text">
-                    {entry.sets.map((s) => (
-                      <span key={s.id}>
-                        {s.weightKg}×{s.reps}
-                        <span className="text-xs text-text-faint"> {SET_TYPE_SHORT[s.setType]}</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                <HistoryEntry
+                  key={entry.id}
+                  id={entry.id}
+                  exerciseId={id}
+                  dateLabel={format(entry.workoutSession.startedAt, "EEEE, d MMM", { locale: es })}
+                  sets={entry.sets}
+                />
               ))}
             </div>
           </section>

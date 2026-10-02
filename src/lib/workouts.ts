@@ -169,6 +169,14 @@ export async function finishSession(id: string) {
   });
 }
 
+// Deletes a whole session (in progress or completed) with its exercises and
+// sets — e.g. a test run. Unlike finishing, this removes it entirely so it
+// stops counting toward records and no longer shows up on Hoy.
+export async function deleteSession(id: string) {
+  const userId = await requireUserId();
+  await prisma.workoutSession.deleteMany({ where: { id, userId } });
+}
+
 export async function listSessions(limit = 30) {
   const userId = await requireUserId();
   return prisma.workoutSession.findMany({
@@ -259,6 +267,16 @@ export async function listExerciseHistory(exerciseId: string, limit = 20) {
     orderBy: { workoutSession: { startedAt: "desc" } },
     take: limit,
     include: { sets: { orderBy: { order: "asc" } }, workoutSession: { select: { startedAt: true, routineName: true } } },
+  });
+}
+
+// Deletes one past entry (an exercise logged within a finished session, with
+// its sets) — e.g. test data. Recomputes PRs/records automatically since
+// those are derived from this table, not stored separately.
+export async function deleteHistoryEntry(workoutExerciseId: string) {
+  const userId = await requireUserId();
+  await prisma.workoutExercise.deleteMany({
+    where: { id: workoutExerciseId, userId, workoutSession: { status: "COMPLETED" } },
   });
 }
 

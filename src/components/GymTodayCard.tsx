@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { startFreeformWorkoutAction, startWorkoutAction } from "@/app/gym-actions";
-import { IconGym } from "@/components/icons";
+import { deleteSessionAction, startFreeformWorkoutAction, startWorkoutAction } from "@/app/gym-actions";
+import { IconGym, IconTrash } from "@/components/icons";
 import type { TodayGymStatus } from "@/lib/workouts";
 
 export default function GymTodayCard({
@@ -13,11 +14,20 @@ export default function GymTodayCard({
   status: TodayGymStatus;
   otherRoutines: { id: string; name: string }[];
 }) {
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [choosingOther, setChoosingOther] = useState(false);
   const [pending, startTransition] = useTransition();
 
   if (!status.scheduled) return null;
+
+  function handleDeleteSession(id: string) {
+    if (!window.confirm("¿Eliminar este entrenamiento? No se puede deshacer.")) return;
+    startTransition(async () => {
+      await deleteSessionAction(id);
+      router.refresh();
+    });
+  }
 
   // Already started (or finished) today — whatever routine (or none) it's
   // actually running, regardless of what's permanently assigned to today.
@@ -28,10 +38,19 @@ export default function GymTodayCard({
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
             <IconGym className="h-4 w-4" />
           </span>
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="font-medium text-text">{status.session.routineName}</p>
             <p className="text-xs text-accent-strong">Entrenamiento de hoy completado ✓</p>
           </div>
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => handleDeleteSession(status.session!.id)}
+            className="shrink-0 rounded-lg p-2 text-text-faint transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-50"
+            aria-label="Eliminar entrenamiento"
+          >
+            <IconTrash className="h-4 w-4" />
+          </button>
         </div>
       );
     }
@@ -44,6 +63,15 @@ export default function GymTodayCard({
           <p className="truncate text-sm font-medium text-text">{status.session.routineName}</p>
           <p className="text-xs text-text-faint">Entrenamiento en curso</p>
         </div>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => handleDeleteSession(status.session!.id)}
+          className="shrink-0 rounded-lg p-2 text-text-faint transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-50"
+          aria-label="Eliminar entrenamiento"
+        >
+          <IconTrash className="h-4 w-4" />
+        </button>
         <Link
           href={`/gimnasio/entrenar/${status.session.id}`}
           className="shrink-0 rounded-xl bg-accent px-3.5 py-2 text-xs font-semibold text-accent-on shadow-sm shadow-black/10"
