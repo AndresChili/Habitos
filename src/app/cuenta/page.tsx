@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal";
 import { changePasswordAction, logoutAction } from "@/app/actions";
 import { IconLogout } from "@/components/icons";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,11 @@ export default async function CuentaPage({
         <h1 className="text-2xl font-semibold tracking-tight text-text">Cuenta</h1>
         <p className="text-sm text-text-muted">{user.email}</p>
       </header>
+
+      <section className="space-y-2.5">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Apariencia</h2>
+        <ThemeToggle />
+      </section>
 
       <section className="space-y-2.5">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Cambiar contraseña</h2>
