@@ -179,10 +179,7 @@
 }
 
 body {
-  background:
-    radial-gradient(1000px circle at 10% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 55%),
-    radial-gradient(900px circle at 110% 0%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 50%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;

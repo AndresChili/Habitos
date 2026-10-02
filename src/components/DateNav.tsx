@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { format, parseISO, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 
+function capitalizeFirst(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export default function DateNav({
   date,
   todayKey,
@@ -19,7 +23,7 @@ export default function DateNav({
   const router = useRouter();
   const dateInputRef = useRef<HTMLInputElement>(null);
   const parsed = parseISO(date);
-  const label = format(parsed, "EEEE, d 'de' MMMM", { locale: es });
+  const label = capitalizeFirst(format(parsed, "EEEE, d MMM", { locale: es }));
   const isToday = date === todayKey;
 
   function go(target: string) {
@@ -27,18 +31,29 @@ export default function DateNav({
   }
 
   return (
-    <header className="flex items-center justify-between gap-2">
+    <header className="flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => go(format(addDays(parsed, -1), "yyyy-MM-dd"))}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-muted text-text-muted transition-all active:scale-90"
+        aria-label="Día anterior"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
+          <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
       <div
         role="button"
         tabIndex={0}
         onClick={() => dateInputRef.current?.showPicker?.()}
         onKeyDown={(e) => e.key === "Enter" && dateInputRef.current?.showPicker?.()}
-        className="relative min-w-0 flex-1 cursor-pointer rounded-xl py-1 text-left transition-colors active:scale-[0.99]"
+        className="relative min-w-0 flex-1 cursor-pointer px-1 text-left active:scale-[0.99]"
       >
         <p className="text-[13px] font-semibold text-text-faint">
           {isToday ? "Hoy" : format(parsed, "yyyy") !== format(new Date(), "yyyy") ? format(parsed, "yyyy") : " "}
         </p>
-        <h1 className="truncate text-[26px] font-bold capitalize tracking-tight text-text">{label}</h1>
+        <h1 className="truncate text-xl font-bold tracking-tight text-text">{label}</h1>
         <input
           ref={dateInputRef}
           type="date"
@@ -51,19 +66,8 @@ export default function DateNav({
 
       <button
         type="button"
-        onClick={() => go(format(addDays(parsed, -1), "yyyy-MM-dd"))}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-faint transition-all hover:bg-surface-muted active:scale-90"
-        aria-label="Día anterior"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
-          <path d="M15 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
-      <button
-        type="button"
         onClick={() => go(format(addDays(parsed, 1), "yyyy-MM-dd"))}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-faint transition-all hover:bg-surface-muted active:scale-90"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-muted text-text-muted transition-all active:scale-90"
         aria-label="Día siguiente"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
@@ -75,7 +79,7 @@ export default function DateNav({
         const pct = Math.round(((habitsDone ?? 0) / habitsTotal) * 360);
         return (
           <div
-            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+            className="relative ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
             style={{ background: `conic-gradient(var(--accent) 0deg ${pct}deg, var(--border) ${pct}deg 360deg)` }}
           >
             <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-bg text-[11px] font-bold text-accent-strong">
