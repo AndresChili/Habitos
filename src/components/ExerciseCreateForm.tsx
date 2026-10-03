@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createExerciseAction } from "@/app/gym-actions";
 import { EQUIPMENT_LABELS, MUSCLE_LABELS, MUSCLE_ORDER } from "@/lib/gymLabels";
+import { IconPlus } from "@/components/icons";
 import type { Equipment, MuscleGroup } from "@/generated/prisma/client";
 
 const EQUIPMENT_ORDER: Equipment[] = ["BARBELL", "DUMBBELL", "MACHINE", "CABLE", "BODYWEIGHT"];
@@ -23,9 +24,10 @@ export default function ExerciseCreateForm() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-2xl border border-dashed border-border py-3 text-sm font-medium text-text-muted transition-all active:scale-[0.98] hover:border-violet hover:text-violet"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-violet to-violet-2 py-3.5 text-sm font-semibold text-violet-on shadow-glow-violet transition-all active:scale-[0.98]"
       >
-        + Crear ejercicio
+        <IconPlus className="h-4 w-4" />
+        Crear ejercicio
       </button>
     );
   }

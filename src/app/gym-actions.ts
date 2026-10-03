@@ -12,7 +12,7 @@ import {
   updateRoutineExerciseTarget,
   updateRoutineWeekdays,
 } from "@/lib/routines";
-import { createExercise, type ExerciseInput } from "@/lib/exercises";
+import { archiveExercise, createExercise, updateExercise, type ExerciseInput } from "@/lib/exercises";
 import { updateGymWeekdays } from "@/lib/settings";
 import {
   addExerciseToSession,
@@ -34,6 +34,19 @@ export async function createExerciseAction(input: ExerciseInput) {
   const result = await createExercise(input);
   revalidatePath("/gimnasio/ejercicios");
   return result;
+}
+
+export async function updateExerciseAction(id: string, input: ExerciseInput) {
+  const result = await updateExercise(id, input);
+  revalidatePath("/gimnasio/ejercicios");
+  revalidatePath(`/gimnasio/ejercicios/${id}`);
+  return result;
+}
+
+export async function archiveExerciseAction(id: string) {
+  await archiveExercise(id);
+  revalidatePath("/gimnasio/ejercicios");
+  redirect("/gimnasio/ejercicios");
 }
 
 // ---- Rutinas ----

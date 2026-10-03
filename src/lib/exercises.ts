@@ -44,6 +44,28 @@ export async function createExercise(
   return { ok: true, id: exercise.id };
 }
 
+export async function updateExercise(
+  id: string,
+  input: ExerciseInput
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const userId = await requireUserId();
+  const name = input.name.trim();
+  if (!name) return { ok: false, error: "El nombre no puede estar vacío." };
+
+  const result = await prisma.exercise.updateMany({
+    where: { id, userId },
+    data: {
+      name,
+      primaryMuscle: input.primaryMuscle,
+      secondaryMuscles: input.secondaryMuscles ?? [],
+      equipment: input.equipment,
+      instructions: input.instructions?.trim() || null,
+    },
+  });
+  if (result.count === 0) return { ok: false, error: "Ejercicio no encontrado." };
+  return { ok: true };
+}
+
 // Archived, never hard-deleted — so WorkoutExercise/RoutineExercise rows
 // referencing it stay valid (see Exercise model comment in schema.prisma).
 export async function archiveExercise(id: string) {

@@ -156,6 +156,8 @@ enum MuscleGroup {
   CUADRICEPS
   GLUTES
   ABDOMINALES
+  GEMELOS
+  ABDUCTORES
 }
 
 enum Equipment {

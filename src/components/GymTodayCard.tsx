@@ -42,21 +42,21 @@ export default function GymTodayCard({
             <p className="font-medium text-text">{status.session.routineName}</p>
             <p className="text-xs text-violet-strong">Entrenamiento de hoy completado ✓</p>
           </div>
+          <Link
+            href={`/gimnasio/entrenar/${status.session.id}`}
+            className="shrink-0 rounded-xl bg-gradient-to-br from-accent to-accent-2 px-3.5 py-2 text-xs font-semibold text-accent-on shadow-glow"
+          >
+            Ver
+          </Link>
           <button
             type="button"
             disabled={pending}
             onClick={() => handleDeleteSession(status.session!.id)}
-            className="shrink-0 rounded-lg p-2 text-text-faint transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-50"
+            className="shrink-0 rounded-lg bg-danger/10 p-2 text-danger transition-colors active:scale-95 disabled:opacity-50"
             aria-label="Eliminar entrenamiento"
           >
             <IconTrash className="h-4 w-4" />
           </button>
-          <Link
-            href={`/gimnasio/entrenar/${status.session.id}`}
-            className="shrink-0 rounded-xl border border-border px-3.5 py-2 text-xs font-semibold text-text-muted"
-          >
-            Ver
-          </Link>
         </div>
       );
     }

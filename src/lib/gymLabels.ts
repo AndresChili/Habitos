@@ -10,6 +10,8 @@ export const MUSCLE_LABELS: Record<MuscleGroup, string> = {
   CUADRICEPS: "Cuádriceps",
   GLUTES: "Glúteos",
   ABDOMINALES: "Abdominales",
+  GEMELOS: "Gemelos",
+  ABDUCTORES: "Abductores",
 };
 
 export const EQUIPMENT_LABELS: Record<Equipment, string> = {
@@ -49,5 +51,7 @@ export const MUSCLE_ORDER: MuscleGroup[] = [
   "CUADRICEPS",
   "FEMORAL",
   "GLUTES",
+  "ABDUCTORES",
   "ABDOMINALES",
+  "GEMELOS",
 ];

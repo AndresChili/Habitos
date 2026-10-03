@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addSetAction, deleteSetAction, removeExerciseFromSessionAction, updateSetAction } from "@/app/gym-actions";
 import { MUSCLE_LABELS, SET_TYPE_SHORT } from "@/lib/gymLabels";
+import { IconCheck } from "@/components/icons";
 import type { MuscleGroup, SetType } from "@/generated/prisma/client";
 
 const SET_TYPES: SetType[] = ["WARMUP", "NORMAL", "TOP_SET", "BACK_OFF"];
@@ -117,6 +118,8 @@ export default function WorkoutExerciseCard({
   initialSets,
   suggestion,
   onSetLogged,
+  done,
+  onToggleDone,
 }: {
   workoutExerciseId: string;
   sessionId: string;
@@ -128,6 +131,8 @@ export default function WorkoutExerciseCard({
   initialSets: SetRow[];
   suggestion: { text: string } | null;
   onSetLogged: () => void;
+  done: boolean;
+  onToggleDone: (done: boolean) => void;
 }) {
   const router = useRouter();
   const [sets, setSets] = useState<SetRow[]>(initialSets);
@@ -173,6 +178,27 @@ export default function WorkoutExerciseCard({
       setSets((prev) => [...prev, { id: result.id, weightKg: Number(weight.replace(",", ".")), reps: Number(reps), setType }]);
       onSetLogged();
     });
+  }
+
+  if (done) {
+    return (
+      <div className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-surface px-4 py-3 shadow-card">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on">
+            <IconCheck className="h-3 w-3" />
+          </span>
+          <p className="truncate font-medium text-text">{exerciseName}</p>
+          <span className="shrink-0 text-xs font-medium text-accent-strong">Guardado</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => onToggleDone(false)}
+          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-text-muted transition-all active:scale-95"
+        >
+          Editar
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -245,6 +271,14 @@ export default function WorkoutExerciseCard({
         <SetTypePicker value={setType} onChange={setSetType} />
         {error && <p className="text-xs text-danger">{error}</p>}
       </form>
+
+      <button
+        type="button"
+        onClick={() => onToggleDone(true)}
+        className="w-full rounded-xl bg-gradient-to-br from-accent to-accent-2 py-2.5 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98]"
+      >
+        Guardar
+      </button>
     </div>
   );
 }

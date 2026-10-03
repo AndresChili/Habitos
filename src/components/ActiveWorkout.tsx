@@ -34,6 +34,20 @@ export default function ActiveWorkout({
 }) {
   const [resetSignal, setResetSignal] = useState(0);
   const [pending, startTransition] = useTransition();
+  const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
+
+  function setDone(id: string, isDone: boolean) {
+    setDoneIds((prev) => {
+      const next = new Set(prev);
+      if (isDone) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  const orderedExercises = [...exercises].sort(
+    (a, b) => Number(doneIds.has(a.workoutExerciseId)) - Number(doneIds.has(b.workoutExerciseId))
+  );
 
   return (
     <div className="space-y-4">
@@ -45,7 +59,7 @@ export default function ActiveWorkout({
       {!completed && <RestTimer resetSignal={resetSignal} />}
 
       <div className="space-y-3">
-        {exercises.map((ex) => (
+        {orderedExercises.map((ex) => (
           <WorkoutExerciseCard
             key={ex.workoutExerciseId}
             workoutExerciseId={ex.workoutExerciseId}
@@ -58,6 +72,8 @@ export default function ActiveWorkout({
             initialSets={ex.initialSets}
             suggestion={ex.suggestion}
             onSetLogged={() => setResetSignal((n) => n + 1)}
+            done={doneIds.has(ex.workoutExerciseId)}
+            onToggleDone={(isDone) => setDone(ex.workoutExerciseId, isDone)}
           />
         ))}
       </div>

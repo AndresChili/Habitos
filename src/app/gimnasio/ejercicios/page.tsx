@@ -23,6 +23,8 @@ export default async function EjerciciosPage() {
 
       <GymTabs active="ejercicios" />
 
+      <ExerciseCreateForm />
+
       {byMuscle.map((group) => (
         <section key={group.muscle} className="space-y-2">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">{MUSCLE_LABELS[group.muscle]}</h2>
@@ -40,8 +42,6 @@ export default async function EjerciciosPage() {
           </div>
         </section>
       ))}
-
-      <ExerciseCreateForm />
     </div>
   );
 }

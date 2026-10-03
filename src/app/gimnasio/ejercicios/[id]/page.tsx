@@ -6,7 +6,7 @@ import { getExercise } from "@/lib/exercises";
 import { computeExercisePRs, listExerciseHistory } from "@/lib/workouts";
 import StatTile from "@/components/StatTile";
 import HistoryEntry from "@/components/HistoryEntry";
-import { EQUIPMENT_LABELS, MUSCLE_LABELS } from "@/lib/gymLabels";
+import ExerciseHeader from "@/components/ExerciseHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -29,12 +29,15 @@ export default async function EjercicioDetailPage({ params }: { params: Promise<
           </svg>
           Ejercicios
         </Link>
-        <div>
-          <h1 className="text-[26px] font-bold tracking-tight text-text">{exercise.name}</h1>
-          <p className="mt-0.5 text-sm text-text-muted">
-            {MUSCLE_LABELS[exercise.primaryMuscle]} · {EQUIPMENT_LABELS[exercise.equipment]}
-          </p>
-        </div>
+        <ExerciseHeader
+          exercise={{
+            id: exercise.id,
+            name: exercise.name,
+            primaryMuscle: exercise.primaryMuscle,
+            equipment: exercise.equipment,
+            instructions: exercise.instructions,
+          }}
+        />
       </header>
 
       {!prs || (!prs.bestWeight && !prs.bestReps) ? (

@@ -18,7 +18,6 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
   const [defaultSeconds, setDefaultSeconds] = useState(FALLBACK_SECONDS);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [running, setRunning] = useState(false);
-  const [showPresets, setShowPresets] = useState(false);
   const firstRender = useRef(true);
 
   useEffect(() => {
@@ -87,20 +86,6 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
         <div className="ml-auto flex items-center gap-1.5">
           <button
             type="button"
-            onClick={() => setSecondsLeft((s) => Math.max(0, s - 15))}
-            className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
-          >
-            -15
-          </button>
-          <button
-            type="button"
-            onClick={() => setSecondsLeft((s) => s + 15)}
-            className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
-          >
-            +15
-          </button>
-          <button
-            type="button"
             onClick={() => setRunning((r) => !r)}
             className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
           >
@@ -108,17 +93,9 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
           </button>
           <button
             type="button"
-            onClick={() => setShowPresets((s) => !s)}
-            className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
-          >
-            Ajustar
-          </button>
-          <button
-            type="button"
             onClick={() => {
               setSecondsLeft(0);
               setRunning(false);
-              setShowPresets(false);
             }}
             className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
           >
@@ -126,12 +103,6 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
           </button>
         </div>
       </div>
-      {showPresets &&
-        presetRow((p) => {
-          chooseDefault(p);
-          setSecondsLeft(p);
-          setRunning(true);
-        })}
     </div>
   );
 }
