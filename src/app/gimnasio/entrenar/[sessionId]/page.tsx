@@ -46,6 +46,7 @@ export default async function EntrenarPage({ params }: { params: Promise<{ sessi
       routineName={session.routineName}
       exercises={exercises}
       availableExercises={availableExercises.map((e) => ({ id: e.id, name: e.name, primaryMuscle: e.primaryMuscle }))}
+      completed={session.status === "COMPLETED"}
     />
   );
 }

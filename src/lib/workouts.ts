@@ -194,6 +194,25 @@ export async function deleteSession(id: string) {
   await prisma.workoutSession.deleteMany({ where: { id, userId } });
 }
 
+// All sessions (any status) whose dateKey falls in the given month —
+// dateKey is "yyyy-MM-dd" so plain string bounds are safe here.
+export async function listSessionsForMonth(monthKey: string) {
+  const userId = await requireUserId();
+  const sessions = await prisma.workoutSession.findMany({
+    where: { userId, dateKey: { gte: `${monthKey}-01`, lte: `${monthKey}-31` } },
+    orderBy: { startedAt: "asc" },
+    select: { id: true, dateKey: true, routineName: true, status: true },
+  });
+
+  const byDate = new Map<string, typeof sessions>();
+  for (const s of sessions) {
+    const arr = byDate.get(s.dateKey) ?? [];
+    arr.push(s);
+    byDate.set(s.dateKey, arr);
+  }
+  return byDate;
+}
+
 export async function listSessions(limit = 30) {
   const userId = await requireUserId();
   return prisma.workoutSession.findMany({

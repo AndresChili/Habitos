@@ -51,6 +51,12 @@ export default function GymTodayCard({
           >
             <IconTrash className="h-4 w-4" />
           </button>
+          <Link
+            href={`/gimnasio/entrenar/${status.session.id}`}
+            className="shrink-0 rounded-xl border border-border px-3.5 py-2 text-xs font-semibold text-text-muted"
+          >
+            Ver
+          </Link>
         </div>
       );
     }

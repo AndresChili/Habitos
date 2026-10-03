@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { finishWorkoutAction } from "@/app/gym-actions";
 import RestTimer from "@/components/RestTimer";
 import WorkoutExerciseCard from "@/components/WorkoutExerciseCard";
@@ -23,11 +24,13 @@ export default function ActiveWorkout({
   routineName,
   exercises,
   availableExercises,
+  completed = false,
 }: {
   sessionId: string;
   routineName: string;
   exercises: ActiveExercise[];
   availableExercises: { id: string; name: string; primaryMuscle: MuscleGroup }[];
+  completed?: boolean;
 }) {
   const [resetSignal, setResetSignal] = useState(0);
   const [pending, startTransition] = useTransition();
@@ -35,11 +38,11 @@ export default function ActiveWorkout({
   return (
     <div className="space-y-4">
       <header className="space-y-1">
-        <p className="text-xs font-medium text-text-faint">Entrenando</p>
+        <p className="text-xs font-medium text-text-faint">{completed ? "Entrenamiento completado" : "Entrenando"}</p>
         <h1 className="text-xl font-semibold tracking-tight text-text">{routineName}</h1>
       </header>
 
-      <RestTimer resetSignal={resetSignal} />
+      {!completed && <RestTimer resetSignal={resetSignal} />}
 
       <div className="space-y-3">
         {exercises.map((ex) => (
@@ -59,16 +62,25 @@ export default function ActiveWorkout({
         ))}
       </div>
 
-      <AddExerciseToSession sessionId={sessionId} exercises={availableExercises} />
+      {!completed && <AddExerciseToSession sessionId={sessionId} exercises={availableExercises} />}
 
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => startTransition(() => finishWorkoutAction(sessionId))}
-        className="w-full rounded-2xl bg-gradient-to-br from-violet to-violet-2 py-3.5 text-sm font-semibold text-violet-on shadow-glow-violet transition-all active:scale-[0.98] disabled:opacity-50"
-      >
-        Finalizar entrenamiento
-      </button>
+      {completed ? (
+        <Link
+          href="/gimnasio/calendario"
+          className="block w-full rounded-2xl border border-border py-3.5 text-center text-sm font-semibold text-text-muted transition-all active:scale-[0.98]"
+        >
+          Volver al calendario
+        </Link>
+      ) : (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => startTransition(() => finishWorkoutAction(sessionId))}
+          className="w-full rounded-2xl bg-gradient-to-br from-violet to-violet-2 py-3.5 text-sm font-semibold text-violet-on shadow-glow-violet transition-all active:scale-[0.98] disabled:opacity-50"
+        >
+          Finalizar entrenamiento
+        </button>
+      )}
     </div>
   );
 }

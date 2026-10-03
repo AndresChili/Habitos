@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const DEFAULT_SECONDS = 90;
+const FALLBACK_SECONDS = 90;
+const STORAGE_KEY = "restTimerDefaultSeconds";
+const PRESETS = [30, 60, 90, 120, 150, 180];
 
 function formatTime(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
@@ -13,17 +15,34 @@ function formatTime(totalSeconds: number): string {
 // A single shared rest timer for the whole workout — resets every time
 // `resetSignal` changes (bump it whenever any set is logged).
 export default function RestTimer({ resetSignal }: { resetSignal: number }) {
+  const [defaultSeconds, setDefaultSeconds] = useState(FALLBACK_SECONDS);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [running, setRunning] = useState(false);
+  const [showPresets, setShowPresets] = useState(false);
   const firstRender = useRef(true);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored) setDefaultSeconds(Number(stored));
+    } catch {}
+  }, []);
+
+  function chooseDefault(seconds: number) {
+    setDefaultSeconds(seconds);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, String(seconds));
+    } catch {}
+  }
 
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
-    setSecondsLeft(DEFAULT_SECONDS);
+    setSecondsLeft(defaultSeconds);
     setRunning(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal]);
 
   useEffect(() => {
@@ -32,45 +51,87 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
     return () => clearTimeout(t);
   }, [running, secondsLeft]);
 
-  if (secondsLeft <= 0) return null;
+  function presetRow(onPick: (seconds: number) => void) {
+    return (
+      <div className="mt-2 flex items-center gap-1.5 overflow-x-auto border-t border-violet/20 pt-2">
+        {PRESETS.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => onPick(p)}
+            className={`rounded-lg px-2.5 py-1.5 text-xs font-medium active:scale-95 ${
+              p === defaultSeconds ? "bg-violet text-violet-on" : "bg-surface text-text-muted"
+            }`}
+          >
+            {formatTime(p)}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  if (secondsLeft <= 0) {
+    return (
+      <div className="rounded-2xl border border-violet/20 bg-violet-soft/60 px-4 py-3">
+        <span className="text-sm font-medium text-violet-strong/80">Descanso por defecto</span>
+        {presetRow(chooseDefault)}
+      </div>
+    );
+  }
 
   return (
-    <div className="sticky top-2 z-10 flex items-center gap-3 rounded-2xl border border-violet/30 bg-violet-soft px-4 py-2.5 shadow-card">
-      <span className="text-sm font-semibold tabular-nums text-violet-strong">{formatTime(secondsLeft)}</span>
-      <span className="text-xs text-violet-strong/80">Descanso</span>
-      <div className="ml-auto flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={() => setSecondsLeft((s) => Math.max(0, s - 15))}
-          className="rounded-lg bg-surface px-2 py-1 text-xs font-medium text-text-muted active:scale-95"
-        >
-          -15
-        </button>
-        <button
-          type="button"
-          onClick={() => setSecondsLeft((s) => s + 15)}
-          className="rounded-lg bg-surface px-2 py-1 text-xs font-medium text-text-muted active:scale-95"
-        >
-          +15
-        </button>
-        <button
-          type="button"
-          onClick={() => setRunning((r) => !r)}
-          className="rounded-lg bg-surface px-2 py-1 text-xs font-medium text-text-muted active:scale-95"
-        >
-          {running ? "Pausar" : "Seguir"}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setSecondsLeft(0);
-            setRunning(false);
-          }}
-          className="rounded-lg bg-surface px-2 py-1 text-xs font-medium text-text-muted active:scale-95"
-        >
-          Saltar
-        </button>
+    <div className="sticky top-2 z-10 rounded-2xl border border-violet/30 bg-violet-soft px-4 py-3.5 shadow-card">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl font-bold tabular-nums text-violet-strong">{formatTime(secondsLeft)}</span>
+        <span className="text-sm text-violet-strong/80">Descanso</span>
+        <div className="ml-auto flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setSecondsLeft((s) => Math.max(0, s - 15))}
+            className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
+          >
+            -15
+          </button>
+          <button
+            type="button"
+            onClick={() => setSecondsLeft((s) => s + 15)}
+            className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
+          >
+            +15
+          </button>
+          <button
+            type="button"
+            onClick={() => setRunning((r) => !r)}
+            className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
+          >
+            {running ? "Pausar" : "Seguir"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowPresets((s) => !s)}
+            className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
+          >
+            Ajustar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSecondsLeft(0);
+              setRunning(false);
+              setShowPresets(false);
+            }}
+            className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
+          >
+            Saltar
+          </button>
+        </div>
       </div>
+      {showPresets &&
+        presetRow((p) => {
+          chooseDefault(p);
+          setSecondsLeft(p);
+          setRunning(true);
+        })}
     </div>
   );
 }

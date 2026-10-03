@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type Tab = "rutinas" | "ejercicios" | "records";
+type Tab = "rutinas" | "ejercicios" | "calendario" | "records";
 
 export default function GymTabs({ active }: { active: Tab }) {
   const tabClass = (tab: Tab) =>
@@ -15,6 +15,9 @@ export default function GymTabs({ active }: { active: Tab }) {
       </Link>
       <Link href="/gimnasio/ejercicios" className={tabClass("ejercicios")}>
         Ejercicios
+      </Link>
+      <Link href="/gimnasio/calendario" className={tabClass("calendario")}>
+        Calendario
       </Link>
       <Link href="/gimnasio/records" className={tabClass("records")}>
         Récords
