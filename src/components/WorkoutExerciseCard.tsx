@@ -120,6 +120,7 @@ export default function WorkoutExerciseCard({
   onSetLogged,
   done,
   onToggleDone,
+  readOnly = false,
 }: {
   workoutExerciseId: string;
   sessionId: string;
@@ -133,9 +134,37 @@ export default function WorkoutExerciseCard({
   onSetLogged: () => void;
   done: boolean;
   onToggleDone: (done: boolean) => void;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [sets, setSets] = useState<SetRow[]>(initialSets);
+
+  if (readOnly) {
+    return (
+      <div className="space-y-2 rounded-2xl border border-border bg-surface p-4 shadow-card">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-text">{exerciseName}</p>
+          <span className="rounded-full bg-violet-soft px-2 py-0.5 text-[10px] font-medium text-violet-strong">
+            {MUSCLE_LABELS[primaryMuscle]}
+          </span>
+        </div>
+        {sets.length === 0 ? (
+          <p className="text-xs text-text-faint">Sin series registradas.</p>
+        ) : (
+          <div className="space-y-1.5">
+            {sets.map((s) => (
+              <div key={s.id} className="flex items-center justify-between rounded-xl bg-surface-muted px-3 py-2 text-sm">
+                <span className="text-text">
+                  <span className="font-medium">{s.weightKg}kg</span> × {s.reps}
+                </span>
+                <span className="text-xs text-text-faint">{SET_TYPE_SHORT[s.setType]}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
   const [removing, startRemoveTransition] = useTransition();
 
   function removeFromSession() {

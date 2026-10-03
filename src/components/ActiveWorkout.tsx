@@ -74,6 +74,7 @@ export default function ActiveWorkout({
             onSetLogged={() => setResetSignal((n) => n + 1)}
             done={doneIds.has(ex.workoutExerciseId)}
             onToggleDone={(isDone) => setDone(ex.workoutExerciseId, isDone)}
+            readOnly={completed}
           />
         ))}
       </div>
