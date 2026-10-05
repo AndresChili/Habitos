@@ -10,9 +10,11 @@ import HabitToggle from "@/components/HabitToggle";
 import TaskForm from "@/components/TaskForm";
 import TaskItem from "@/components/TaskItem";
 import WeightQuickInput from "@/components/WeightQuickInput";
+import WeightChip from "@/components/WeightChip";
+import { WeightVisibilityProvider } from "@/components/WeightVisibility";
 import DateNav from "@/components/DateNav";
 import GymTodayCard from "@/components/GymTodayCard";
-import { IconClock, IconGym, IconWeight } from "@/components/icons";
+import { IconClock, IconGym } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +51,7 @@ export default async function TodayPage({
   const gymChipLabel = WEEKDAY_NAMES[isoWeekday(nowInTz(tz)) - 1];
 
   return (
+    <WeightVisibilityProvider>
     <div className="space-y-8">
       <DateNav date={date} todayKey={todayKey} habitsDone={habitsDone} habitsTotal={habits.length} />
 
@@ -63,15 +66,7 @@ export default async function TodayPage({
               <p className="truncate text-sm font-bold text-text">{gymChipLabel}</p>
             </Link>
           )}
-          <Link href="/peso" className="flex-1 rounded-2xl border border-border bg-surface p-3 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card-hover">
-            <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[9px] bg-gradient-to-br from-rose to-rose-2 text-rose-on">
-              <IconWeight className="h-3.5 w-3.5" />
-            </span>
-            <p className="mt-1.5 text-[11px] font-semibold text-text-faint">Peso</p>
-            <p className="truncate text-sm font-bold text-text">
-              {weight?.weightKg ?? suggestedWeight?.weightKg ?? "—"} <span className="text-xs font-semibold text-text-faint">kg</span>
-            </p>
-          </Link>
+          <WeightChip weightKg={weight?.weightKg ?? suggestedWeight?.weightKg ?? "—"} />
           <div className="flex-1 rounded-2xl border border-border bg-surface p-3 shadow-card">
             <span className="flex h-[26px] w-[26px] items-center justify-center rounded-[9px] bg-gradient-to-br from-blue to-blue-2 text-blue-on">
               <IconClock className="h-3.5 w-3.5" />
@@ -129,5 +124,6 @@ export default async function TodayPage({
         )}
       </section>
     </div>
+    </WeightVisibilityProvider>
   );
 }

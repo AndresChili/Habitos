@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { setWeightAction } from "@/app/actions";
 import { IconWeight } from "@/components/icons";
+import { useWeightVisibility } from "@/components/WeightVisibility";
 
 export default function WeightQuickInput({
   date,
@@ -20,6 +21,7 @@ export default function WeightQuickInput({
   const [isSuggestion, setIsSuggestion] = useState(initialWeight === null && suggestedWeight !== null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { open, setOpen } = useWeightVisibility();
 
   const delta =
     initialWeight !== null && previousWeight !== null ? Math.round((initialWeight - previousWeight) * 10) / 10 : null;
@@ -29,10 +31,18 @@ export default function WeightQuickInput({
     setError(null);
     startTransition(async () => {
       const result = await setWeightAction(date, Number(value.replace(",", ".")));
-      if (!result.ok) setError(result.error);
-      else setSaved(true);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setSaved(true);
+      setOpen(false);
     });
   }
+
+  // Once today's weight is saved, this card gets out of the way — the Peso
+  // chip above is what brings it back to make a change.
+  if (saved && !open) return null;
 
   return (
     <form
