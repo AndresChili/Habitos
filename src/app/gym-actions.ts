@@ -21,6 +21,7 @@ import {
   deleteSession,
   deleteSet,
   finishSession,
+  listExerciseHistory,
   removeExerciseFromSession,
   startFreeformSession,
   startOrResumeSession,
@@ -184,6 +185,19 @@ export async function addExerciseToSessionAction(sessionId: string, exerciseId: 
 export async function removeExerciseFromSessionAction(workoutExerciseId: string, sessionId: string) {
   await removeExerciseFromSession(workoutExerciseId);
   revalidatePath(`/gimnasio/entrenar/${sessionId}`);
+}
+
+// Past sessions' sets for this exercise, for the "ver entrenos anteriores"
+// button inside an active workout card — so the user can see what weight
+// they used before deciding what to put for each set now.
+export async function getExerciseHistoryAction(exerciseId: string) {
+  const history = await listExerciseHistory(exerciseId, 8);
+  return history.map((h) => ({
+    id: h.id,
+    date: h.workoutSession.startedAt,
+    routineName: h.workoutSession.routineName,
+    sets: h.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps, setType: s.setType })),
+  }));
 }
 
 export async function deleteHistoryEntryAction(workoutExerciseId: string, exerciseId: string) {

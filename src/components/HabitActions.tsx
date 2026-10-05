@@ -8,8 +8,10 @@ import {
   restoreHabitAction,
   resumeHabitAction,
 } from "@/app/actions";
+import { IconChartBar, IconPause, IconPencil, IconPlay, IconTrash } from "@/components/icons";
 
-const pill = "rounded-lg px-2 py-1 text-xs font-medium transition-all active:scale-95";
+const action =
+  "flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-all active:scale-95";
 
 export default function HabitActions({
   id,
@@ -28,35 +30,40 @@ export default function HabitActions({
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => restoreHabitAction(id))}
-        className={`${pill} text-text-faint hover:bg-surface-muted hover:text-text-muted disabled:opacity-50`}
+        className={`${action} w-full text-text-faint hover:bg-surface-muted hover:text-text-muted disabled:opacity-50`}
       >
+        <IconPlay className="h-4 w-4" />
         Restaurar
       </button>
     );
   }
 
   return (
-    <div className="flex items-center gap-1 text-text-faint">
-      <Link href={`/habitos/${id}`} className={`${pill} hover:bg-accent-soft hover:text-accent-strong`}>
+    <div className="flex items-stretch divide-x divide-border text-text-faint">
+      <Link href={`/habitos/${id}`} className={`${action} hover:bg-accent-soft hover:text-accent-strong`}>
+        <IconChartBar className="h-4 w-4" />
         Progreso
       </Link>
-      <Link href={`/habitos/${id}/editar`} className={`${pill} hover:bg-surface-muted hover:text-text-muted`}>
+      <Link href={`/habitos/${id}/editar`} className={`${action} hover:bg-surface-muted hover:text-text-muted`}>
+        <IconPencil className="h-4 w-4" />
         Editar
       </Link>
       <button
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => (paused ? resumeHabitAction(id) : pauseHabitAction(id)))}
-        className={`${pill} hover:bg-surface-muted hover:text-text-muted disabled:opacity-50`}
+        className={`${action} hover:bg-surface-muted hover:text-text-muted disabled:opacity-50`}
       >
+        {paused ? <IconPlay className="h-4 w-4" /> : <IconPause className="h-4 w-4" />}
         {paused ? "Reanudar" : "Pausar"}
       </button>
       <button
         type="button"
         disabled={pending}
         onClick={() => startTransition(() => archiveHabitAction(id))}
-        className={`${pill} bg-danger/10 text-danger hover:bg-danger/15 disabled:opacity-50`}
+        className={`${action} text-danger hover:bg-danger/10 disabled:opacity-50`}
       >
+        <IconTrash className="h-4 w-4" />
         Eliminar
       </button>
     </div>

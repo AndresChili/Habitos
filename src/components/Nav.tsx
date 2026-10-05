@@ -28,7 +28,7 @@ export default function Nav() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 text-[10px] font-medium transition-all active:scale-95 ${
+              className={`flex w-16 flex-col items-center gap-0.5 rounded-xl py-2 text-[10px] font-medium transition-all active:scale-95 ${
                 active
                   ? "bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow"
                   : "text-text-faint hover:text-text-muted"

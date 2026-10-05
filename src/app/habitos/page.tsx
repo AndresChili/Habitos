@@ -30,17 +30,19 @@ export default async function HabitosPage() {
         {fixed.length === 0 ? (
           <p className="text-sm text-text-faint">Ninguno todavía.</p>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card divide-y divide-border">
+          <div className="space-y-2.5">
             {fixed.map((h) => (
-              <div key={h.id} className="flex items-center justify-between px-4 py-3.5 text-sm">
-                <div>
-                  <p className="font-medium text-text">{h.name}</p>
+              <div key={h.id} className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+                <div className="px-4 py-3.5 text-sm">
+                  <p className="truncate font-medium text-text">{h.name}</p>
                   <p className="mt-0.5 text-xs text-text-faint">
                     {h.weekdays.length === 7 ? "Diario" : h.weekdays.map((d) => WEEKDAY_LABELS[d - 1]).join(" ")}
                     {isCurrentlyPaused(h.pauses) && " · pausado"}
                   </p>
                 </div>
-                <HabitActions id={h.id} archived={false} paused={isCurrentlyPaused(h.pauses)} />
+                <div className="border-t border-border">
+                  <HabitActions id={h.id} archived={false} paused={isCurrentlyPaused(h.pauses)} />
+                </div>
               </div>
             ))}
           </div>
@@ -52,9 +54,9 @@ export default async function HabitosPage() {
         {quotaHabits.length === 0 ? (
           <p className="text-sm text-text-faint">Ninguno todavía.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {quotaHabits.map((h) => (
-              <div key={h.id} className="space-y-1.5">
+              <div key={h.id} className="space-y-2">
                 <QuotaToggle
                   habitId={h.id}
                   name={h.name}
@@ -62,7 +64,7 @@ export default async function HabitosPage() {
                   periodLabel={h.periodLabel}
                   paused={h.paused}
                 />
-                <div className="flex justify-end pr-1">
+                <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
                   <HabitActions id={h.id} archived={false} paused={h.paused} />
                 </div>
               </div>
@@ -79,14 +81,13 @@ export default async function HabitosPage() {
       {archived.length > 0 && (
         <section className="space-y-2.5">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Archivados</h2>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {archived.map((h) => (
-              <div
-                key={h.id}
-                className="flex items-center justify-between rounded-2xl border border-dashed border-border px-4 py-3.5 text-sm text-text-faint"
-              >
-                <p>{h.name}</p>
-                <HabitActions id={h.id} archived paused={false} />
+              <div key={h.id} className="overflow-hidden rounded-2xl border border-dashed border-border bg-surface">
+                <p className="truncate px-4 py-3 text-sm text-text-faint">{h.name}</p>
+                <div className="border-t border-dashed border-border">
+                  <HabitActions id={h.id} archived paused={false} />
+                </div>
               </div>
             ))}
           </div>

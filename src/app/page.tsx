@@ -4,7 +4,8 @@ import { listTasksForDate } from "@/lib/tasks";
 import { getLatestWeightBefore, getWeightForDate } from "@/lib/weight";
 import { getTodayGymStatus } from "@/lib/workouts";
 import { listRoutines } from "@/lib/routines";
-import { dayKey, nowInTz } from "@/lib/dates";
+import { dayKey, isoWeekday, nowInTz } from "@/lib/dates";
+import { WEEKDAY_NAMES } from "@/lib/gymLabels";
 import HabitToggle from "@/components/HabitToggle";
 import TaskForm from "@/components/TaskForm";
 import TaskItem from "@/components/TaskItem";
@@ -42,12 +43,10 @@ export default async function TodayPage({
 
   const habitsDone = habits.filter((h) => h.done).length;
   const pendingTasks = tasks.filter((t) => !t.done).length;
-  const gymChipLabel =
-    gymStatus?.scheduled && gymStatus.session
-      ? gymStatus.session.routineName
-      : gymStatus?.scheduled && gymStatus.assignedRoutine
-        ? gymStatus.assignedRoutine.name
-        : "Sin rutina";
+  // A fixed, short label (the weekday) instead of the routine name — a long
+  // routine name would otherwise make this card grow relative to the other
+  // two on the row.
+  const gymChipLabel = WEEKDAY_NAMES[isoWeekday(nowInTz(tz)) - 1];
 
   return (
     <div className="space-y-8">

@@ -29,6 +29,7 @@ export default async function EntrenarPage({ params }: { params: Promise<{ sessi
 
       return {
         workoutExerciseId: we.id,
+        exerciseId: we.exerciseId,
         exerciseName: we.exercise.name,
         primaryMuscle: we.exercise.primaryMuscle,
         targetRepMin: target?.targetRepMin ?? null,

@@ -10,6 +10,7 @@ import type { MuscleGroup, SetType } from "@/generated/prisma/client";
 
 export type ActiveExercise = {
   workoutExerciseId: string;
+  exerciseId: string;
   exerciseName: string;
   primaryMuscle: MuscleGroup;
   targetRepMin: number | null;
@@ -34,19 +35,11 @@ export default function ActiveWorkout({
 }) {
   const [resetSignal, setResetSignal] = useState(0);
   const [pending, startTransition] = useTransition();
-  const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
-
-  function setDone(id: string, isDone: boolean) {
-    setDoneIds((prev) => {
-      const next = new Set(prev);
-      if (isDone) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  }
-
-  const orderedExercises = [...exercises].sort(
-    (a, b) => Number(doneIds.has(a.workoutExerciseId)) - Number(doneIds.has(b.workoutExerciseId))
+  // Only one card is expanded at a time (accordion). Start on the first
+  // exercise that doesn't have sets logged yet — everything else (including
+  // already-saved exercises) starts collapsed.
+  const [openId, setOpenId] = useState<string | null>(
+    () => exercises.find((e) => e.initialSets.length === 0)?.workoutExerciseId ?? exercises[0]?.workoutExerciseId ?? null
   );
 
   return (
@@ -59,10 +52,11 @@ export default function ActiveWorkout({
       {!completed && <RestTimer resetSignal={resetSignal} />}
 
       <div className="space-y-3">
-        {orderedExercises.map((ex) => (
+        {exercises.map((ex, index) => (
           <WorkoutExerciseCard
             key={ex.workoutExerciseId}
             workoutExerciseId={ex.workoutExerciseId}
+            exerciseId={ex.exerciseId}
             sessionId={sessionId}
             exerciseName={ex.exerciseName}
             primaryMuscle={ex.primaryMuscle}
@@ -72,8 +66,9 @@ export default function ActiveWorkout({
             initialSets={ex.initialSets}
             suggestion={ex.suggestion}
             onSetLogged={() => setResetSignal((n) => n + 1)}
-            done={doneIds.has(ex.workoutExerciseId)}
-            onToggleDone={(isDone) => setDone(ex.workoutExerciseId, isDone)}
+            open={openId === ex.workoutExerciseId}
+            onOpen={() => setOpenId(ex.workoutExerciseId)}
+            onSaved={() => setOpenId(exercises[index + 1]?.workoutExerciseId ?? null)}
             readOnly={completed}
           />
         ))}

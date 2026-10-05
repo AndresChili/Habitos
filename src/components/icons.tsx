@@ -142,3 +142,36 @@ export function IconSystem({ className = "h-4 w-4" }: IconProps) {
     </svg>
   );
 }
+
+export function IconPencil({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} className={className}>
+      <path d="M16.5 3.5 20 7l-11 11H5v-4z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function IconPause({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <rect x="6" y="5" width="4" height="14" rx="1" />
+      <rect x="14" y="5" width="4" height="14" rx="1" />
+    </svg>
+  );
+}
+
+export function IconPlay({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M7 4.5 19 12 7 19.5z" />
+    </svg>
+  );
+}
+
+export function IconChartBar({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className={className}>
+      <path d="M5 19.5V11M12 19.5V4.5M19 19.5v-7" strokeLinecap="round" />
+    </svg>
+  );
+}

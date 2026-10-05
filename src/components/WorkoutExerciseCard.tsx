@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { addSetAction, deleteSetAction, removeExerciseFromSessionAction, updateSetAction } from "@/app/gym-actions";
+import {
+  addSetAction,
+  deleteSetAction,
+  getExerciseHistoryAction,
+  removeExerciseFromSessionAction,
+  updateSetAction,
+} from "@/app/gym-actions";
 import { MUSCLE_LABELS, SET_TYPE_SHORT } from "@/lib/gymLabels";
 import { IconCheck } from "@/components/icons";
 import type { MuscleGroup, SetType } from "@/generated/prisma/client";
@@ -10,6 +16,12 @@ import type { MuscleGroup, SetType } from "@/generated/prisma/client";
 const SET_TYPES: SetType[] = ["WARMUP", "NORMAL", "TOP_SET", "BACK_OFF"];
 
 type SetRow = { id: string; weightKg: number; reps: number; setType: SetType };
+type HistoryEntry = {
+  id: string;
+  date: Date;
+  routineName: string;
+  sets: { weightKg: number; reps: number; setType: SetType }[];
+};
 
 function SetTypePicker({ value, onChange }: { value: SetType; onChange: (t: SetType) => void }) {
   return (
@@ -107,8 +119,65 @@ function ExistingSetRow({
   );
 }
 
+function formatHistoryDate(date: Date): string {
+  return new Date(date).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+}
+
+function ExerciseHistoryPanel({ exerciseId }: { exerciseId: string }) {
+  const [open, setOpen] = useState(false);
+  const [entries, setEntries] = useState<HistoryEntry[] | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function toggle() {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    setOpen(true);
+    if (entries === null) {
+      startTransition(async () => {
+        const result = await getExerciseHistoryAction(exerciseId);
+        setEntries(result);
+      });
+    }
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={toggle}
+        className="text-xs font-medium text-violet-strong hover:underline"
+      >
+        {open ? "Ocultar entrenos anteriores" : "Ver entrenos anteriores"}
+      </button>
+      {open && (
+        <div className="mt-2 space-y-1.5">
+          {pending && entries === null && <p className="text-xs text-text-faint">Cargando…</p>}
+          {entries !== null && entries.length === 0 && (
+            <p className="text-xs text-text-faint">Sin entrenos anteriores de este ejercicio.</p>
+          )}
+          {entries?.map((entry) => (
+            <div key={entry.id} className="rounded-xl bg-surface-muted px-3 py-2 text-xs">
+              <p className="mb-1 font-medium text-text-faint">{formatHistoryDate(entry.date)}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {entry.sets.map((s, i) => (
+                  <span key={i} className="rounded-lg bg-surface px-2 py-1 text-text">
+                    {s.weightKg}kg × {s.reps}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WorkoutExerciseCard({
   workoutExerciseId,
+  exerciseId,
   sessionId,
   exerciseName,
   primaryMuscle,
@@ -118,11 +187,13 @@ export default function WorkoutExerciseCard({
   initialSets,
   suggestion,
   onSetLogged,
-  done,
-  onToggleDone,
+  open,
+  onOpen,
+  onSaved,
   readOnly = false,
 }: {
   workoutExerciseId: string;
+  exerciseId: string;
   sessionId: string;
   exerciseName: string;
   primaryMuscle: MuscleGroup;
@@ -132,12 +203,35 @@ export default function WorkoutExerciseCard({
   initialSets: SetRow[];
   suggestion: { text: string } | null;
   onSetLogged: () => void;
-  done: boolean;
-  onToggleDone: (done: boolean) => void;
+  open: boolean;
+  onOpen: () => void;
+  onSaved: () => void;
   readOnly?: boolean;
 }) {
   const router = useRouter();
   const [sets, setSets] = useState<SetRow[]>(initialSets);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Bring this card into view whenever it becomes the open one — covers both
+  // tapping a collapsed card and tapping "Editar" on an already-saved one, so
+  // you never have to scroll to find it.
+  useEffect(() => {
+    if (open) containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [open]);
+
+  const done = sets.length > 0;
+
+  const [removing, startRemoveTransition] = useTransition();
+
+  const lastBest = lastPerformance?.sets.length
+    ? lastPerformance.sets.reduce((best, s) => (s.weightKg > best.weightKg ? s : best), lastPerformance.sets[0])
+    : null;
+
+  const [weight, setWeight] = useState(lastBest ? lastBest.weightKg.toString() : "");
+  const [reps, setReps] = useState(lastBest ? lastBest.reps.toString() : "");
+  const [setType, setSetType] = useState<SetType>("NORMAL");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
   if (readOnly) {
     return (
@@ -165,7 +259,6 @@ export default function WorkoutExerciseCard({
       </div>
     );
   }
-  const [removing, startRemoveTransition] = useTransition();
 
   function removeFromSession() {
     const warning =
@@ -178,16 +271,6 @@ export default function WorkoutExerciseCard({
       router.refresh();
     });
   }
-
-  const lastBest = lastPerformance?.sets.length
-    ? lastPerformance.sets.reduce((best, s) => (s.weightKg > best.weightKg ? s : best), lastPerformance.sets[0])
-    : null;
-
-  const [weight, setWeight] = useState(lastBest ? lastBest.weightKg.toString() : "");
-  const [reps, setReps] = useState(lastBest ? lastBest.reps.toString() : "");
-  const [setType, setSetType] = useState<SetType>("NORMAL");
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
 
   function addSet(e: React.FormEvent) {
     e.preventDefault();
@@ -209,29 +292,53 @@ export default function WorkoutExerciseCard({
     });
   }
 
-  if (done) {
-    return (
-      <div className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-surface px-4 py-3 shadow-card">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on">
-            <IconCheck className="h-3 w-3" />
-          </span>
-          <p className="truncate font-medium text-text">{exerciseName}</p>
-          <span className="shrink-0 text-xs font-medium text-accent-strong">Guardado</span>
+  if (!open) {
+    if (done) {
+      return (
+        <div
+          ref={containerRef}
+          className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-surface px-4 py-3 shadow-card"
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on">
+              <IconCheck className="h-3 w-3" />
+            </span>
+            <p className="truncate font-medium text-text">{exerciseName}</p>
+            <span className="shrink-0 text-xs font-medium text-accent-strong">Guardado</span>
+          </div>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-text-muted transition-all active:scale-95"
+          >
+            Editar
+          </button>
         </div>
+      );
+    }
+    return (
+      <div ref={containerRef}>
         <button
           type="button"
-          onClick={() => onToggleDone(false)}
-          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-text-muted transition-all active:scale-95"
+          onClick={onOpen}
+          className="flex w-full items-center justify-between gap-2 rounded-2xl border border-border bg-surface px-4 py-3 text-left shadow-card transition-colors active:scale-[0.99]"
         >
-          Editar
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="truncate font-medium text-text">{exerciseName}</p>
+            <span className="shrink-0 rounded-full bg-violet-soft px-2 py-0.5 text-[10px] font-medium text-violet-strong">
+              {MUSCLE_LABELS[primaryMuscle]}
+            </span>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4 shrink-0 text-text-faint">
+            <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-card">
+    <div ref={containerRef} className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-card">
       <div>
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -254,6 +361,9 @@ export default function WorkoutExerciseCard({
           {targetRepMin && targetRepMax ? ` · objetivo ${targetRepMin}-${targetRepMax} reps` : ""}
         </p>
         {suggestion && <p className="mt-1 text-xs text-violet-strong">{suggestion.text}</p>}
+        <div className="mt-1.5">
+          <ExerciseHistoryPanel exerciseId={exerciseId} />
+        </div>
       </div>
 
       {sets.length > 0 && (
@@ -303,7 +413,7 @@ export default function WorkoutExerciseCard({
 
       <button
         type="button"
-        onClick={() => onToggleDone(true)}
+        onClick={onSaved}
         className="w-full rounded-xl bg-gradient-to-br from-accent to-accent-2 py-2.5 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98]"
       >
         Guardar

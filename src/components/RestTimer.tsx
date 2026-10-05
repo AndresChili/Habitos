@@ -12,13 +12,25 @@ function formatTime(totalSeconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+type WakeLockSentinel = { release: () => Promise<void> };
+
 // A single shared rest timer for the whole workout — resets every time
 // `resetSignal` changes (bump it whenever any set is logged).
+//
+// The countdown is driven off an absolute `endTime` timestamp rather than
+// decrementing a counter every tick, so it reads correctly even after the
+// tab was backgrounded/throttled for a while (mobile browsers suspend
+// setInterval but Date.now() keeps ticking). While it's actively running we
+// also request a screen Wake Lock so the phone doesn't lock to a black
+// screen mid-rest — it's released as soon as the timer is paused, finishes,
+// or the component unmounts.
 export default function RestTimer({ resetSignal }: { resetSignal: number }) {
   const [defaultSeconds, setDefaultSeconds] = useState(FALLBACK_SECONDS);
+  const [endTime, setEndTime] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [running, setRunning] = useState(false);
   const firstRender = useRef(true);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   useEffect(() => {
     try {
@@ -39,15 +51,65 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
       firstRender.current = false;
       return;
     }
+    setEndTime(Date.now() + defaultSeconds * 1000);
     setSecondsLeft(defaultSeconds);
     setRunning(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal]);
 
+  // Recompute remaining time from the absolute end timestamp, not from the
+  // previous tick — this is what keeps the number correct across a
+  // background/throttle gap instead of just freezing or drifting.
   useEffect(() => {
-    if (!running || secondsLeft <= 0) return;
-    const t = setTimeout(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
-    return () => clearTimeout(t);
+    if (!running || endTime === null) return;
+
+    function tick() {
+      const remaining = Math.max(0, Math.round(((endTime as number) - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) setRunning(false);
+    }
+
+    tick();
+    const id = setInterval(tick, 250);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [running, endTime]);
+
+  // Keep the screen awake for the duration of the rest countdown so it
+  // doesn't lock mid-rest; re-acquire on visibility change since the OS
+  // releases the lock automatically when the tab is hidden.
+  useEffect(() => {
+    const active = running && secondsLeft > 0;
+    const nav = navigator as Navigator & { wakeLock?: { request: (type: "screen") => Promise<WakeLockSentinel> } };
+
+    async function acquire() {
+      if (!active || wakeLockRef.current || !nav.wakeLock) return;
+      try {
+        wakeLockRef.current = await nav.wakeLock.request("screen");
+      } catch {}
+    }
+
+    async function release() {
+      try {
+        await wakeLockRef.current?.release();
+      } catch {}
+      wakeLockRef.current = null;
+    }
+
+    if (active) acquire();
+    else release();
+
+    function onVisible() {
+      if (document.visibilityState === "visible") acquire();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      release();
+    };
   }, [running, secondsLeft]);
 
   function presetRow(onPick: (seconds: number) => void) {
@@ -86,7 +148,15 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
         <div className="ml-auto flex items-center gap-1.5">
           <button
             type="button"
-            onClick={() => setRunning((r) => !r)}
+            onClick={() => {
+              if (running) {
+                setEndTime(null);
+                setRunning(false);
+              } else {
+                setEndTime(Date.now() + secondsLeft * 1000);
+                setRunning(true);
+              }
+            }}
             className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
           >
             {running ? "Pausar" : "Seguir"}
@@ -94,6 +164,7 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
           <button
             type="button"
             onClick={() => {
+              setEndTime(null);
               setSecondsLeft(0);
               setRunning(false);
             }}
