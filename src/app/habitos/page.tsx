@@ -1,12 +1,8 @@
 import { getQuotaHabits, getSettingsTz, isCurrentlyPaused, listHabits } from "@/lib/habits";
 import HabitForm from "@/components/HabitForm";
-import HabitActions from "@/components/HabitActions";
-import QuotaToggle from "@/components/QuotaToggle";
-import HabitosTabs from "@/components/HabitosTabs";
+import HabitsByType from "@/components/HabitsByType";
 
 export const dynamic = "force-dynamic";
-
-const WEEKDAY_LABELS = ["L", "M", "X", "J", "V", "S", "D"];
 
 export default async function HabitosPage() {
   const tz = await getSettingsTz();
@@ -17,82 +13,20 @@ export default async function HabitosPage() {
   const fixed = active.filter((h) => h.recurrenceType === "FIXED_DAYS");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <header className="space-y-1">
         <h1 className="text-[26px] font-bold tracking-tight text-text">Hábitos</h1>
         <p className="text-sm text-text-muted">Gestiona tus hábitos y su recurrencia.</p>
       </header>
 
-      <HabitosTabs active="gestionar" />
+      <HabitForm mode="create" />
 
-      <section className="space-y-2.5">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Días concretos</h2>
-        {fixed.length === 0 ? (
-          <p className="text-sm text-text-faint">Ninguno todavía.</p>
-        ) : (
-          <div className="space-y-2.5">
-            {fixed.map((h) => (
-              <div key={h.id} className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
-                <div className="px-4 py-3.5 text-sm">
-                  <p className="truncate font-medium text-text">{h.name}</p>
-                  <p className="mt-0.5 text-xs text-text-faint">
-                    {h.weekdays.length === 7 ? "Diario" : h.weekdays.map((d) => WEEKDAY_LABELS[d - 1]).join(" ")}
-                    {isCurrentlyPaused(h.pauses) && " · pausado"}
-                  </p>
-                </div>
-                <div className="border-t border-border">
-                  <HabitActions id={h.id} archived={false} paused={isCurrentlyPaused(h.pauses)} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-2.5">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Semanal / mensual</h2>
-        {quotaHabits.length === 0 ? (
-          <p className="text-sm text-text-faint">Ninguno todavía.</p>
-        ) : (
-          <div className="space-y-2.5">
-            {quotaHabits.map((h) => (
-              <div key={h.id} className="space-y-2">
-                <QuotaToggle
-                  habitId={h.id}
-                  name={h.name}
-                  done={h.done > 0}
-                  periodLabel={h.periodLabel}
-                  paused={h.paused}
-                />
-                <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
-                  <HabitActions id={h.id} archived={false} paused={h.paused} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-2.5">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Crear hábito</h2>
-        <HabitForm mode="create" />
-      </section>
-
-      {archived.length > 0 && (
-        <section className="space-y-2.5">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Archivados</h2>
-          <div className="space-y-2.5">
-            {archived.map((h) => (
-              <div key={h.id} className="overflow-hidden rounded-2xl border border-dashed border-border bg-surface">
-                <p className="truncate px-4 py-3 text-sm text-text-faint">{h.name}</p>
-                <div className="border-t border-dashed border-border">
-                  <HabitActions id={h.id} archived paused={false} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <HabitsByType
+        fixed={fixed.map((h) => ({ id: h.id, name: h.name, weekdays: h.weekdays, paused: isCurrentlyPaused(h.pauses) }))}
+        quota={quotaHabits.map((h) => ({ id: h.id, name: h.name, done: h.done, periodLabel: h.periodLabel, paused: h.paused }))}
+        archivedFixed={archived.filter((h) => h.recurrenceType === "FIXED_DAYS").map((h) => ({ id: h.id, name: h.name }))}
+        archivedQuota={archived.filter((h) => h.recurrenceType === "QUOTA").map((h) => ({ id: h.id, name: h.name }))}
+      />
     </div>
   );
 }

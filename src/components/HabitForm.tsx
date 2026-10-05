@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createHabitAction, updateHabitAction } from "@/app/actions";
+import { IconPlus } from "@/components/icons";
 import type { HabitInput } from "@/lib/habits";
 import type { QuotaPeriod, RecurrenceType } from "@/generated/prisma/client";
 
@@ -42,6 +43,7 @@ export default function HabitForm({
   const router = useRouter();
   const { mode: initMode, freq: initFreq } = initialModeAndFreq(initial);
 
+  const [open, setOpen] = useState(formMode === "edit");
   const [name, setName] = useState(initial?.name ?? "");
   const [mode, setMode] = useState<Mode>(initMode);
   const [freq, setFreq] = useState<Freq>(initFreq);
@@ -84,8 +86,22 @@ export default function HabitForm({
       if (formMode === "create") {
         setName("");
         setWeekdays([]);
+        setOpen(false);
       } else router.push("/habitos");
     });
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-3.5 text-sm font-semibold text-text-muted transition-all active:scale-[0.98] hover:border-accent hover:text-accent"
+      >
+        <IconPlus className="h-4 w-4" />
+        Crear hábito
+      </button>
+    );
   }
 
   return (
@@ -169,13 +185,24 @@ export default function HabitForm({
 
       {error && <p className="text-xs text-danger">{error}</p>}
 
-      <button
-        type="submit"
-        disabled={pending || !name.trim() || (mode === "days" && weekdays.length === 0)}
-        className="w-full rounded-xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
-      >
-        {formMode === "create" ? "Crear hábito" : "Guardar cambios"}
-      </button>
+      <div className="flex gap-2">
+        {formMode === "create" && (
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-text-muted transition-all active:scale-[0.98]"
+          >
+            Cancelar
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={pending || !name.trim() || (mode === "days" && weekdays.length === 0)}
+          className="flex-1 rounded-xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
+        >
+          {formMode === "create" ? "Crear hábito" : "Guardar cambios"}
+        </button>
+      </div>
     </form>
   );
 }

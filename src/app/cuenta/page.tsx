@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal";
 import { changePasswordAction, logoutAction } from "@/app/actions";
-import { IconLogout } from "@/components/icons";
+import { IconChartBar, IconChevronRight, IconLogout } from "@/components/icons";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,20 @@ export default async function CuentaPage({
         <h1 className="text-[26px] font-bold tracking-tight text-text">Cuenta</h1>
         <p className="text-sm text-text-muted">{user.email}</p>
       </header>
+
+      <section className="space-y-2.5">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Hábitos</h2>
+        <Link
+          href="/cuenta/estadisticas"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-card transition-all active:scale-[0.98] hover:border-text-faint/40"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-accent-on shadow-glow">
+            <IconChartBar className="h-4 w-4" />
+          </span>
+          <span className="min-w-0 flex-1 text-sm font-medium text-text">Estadísticas</span>
+          <IconChevronRight className="h-4 w-4 shrink-0 text-text-faint" />
+        </Link>
+      </section>
 
       <section className="space-y-2.5">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-text-faint">Apariencia</h2>
