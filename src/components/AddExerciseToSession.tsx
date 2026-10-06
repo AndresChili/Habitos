@@ -8,8 +8,8 @@ import type { MuscleGroup } from "@/generated/prisma/client";
 
 type Exercise = { id: string; name: string; primaryMuscle: MuscleGroup };
 
-// Adds an exercise to today's session only — never touches the Routine it
-// came from, so next week's session starts from the routine unchanged.
+// Añade un ejercicio solo a la sesión de hoy — nunca toca la Routine de la
+// que vino, así la sesión de la semana que viene parte de la rutina sin cambios.
 export default function AddExerciseToSession({ sessionId, exercises }: { sessionId: string; exercises: Exercise[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);

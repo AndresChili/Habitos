@@ -197,7 +197,7 @@ export type TodayHabit = {
   streak: number;
 };
 
-// FIXED_DAYS habits due on `dateKeyValue`, for the "Hoy" screen.
+// Hábitos FIXED_DAYS que vencen en `dateKeyValue`, para la pantalla "Hoy".
 export async function getFixedHabitsForDate(dateKeyValue: string): Promise<TodayHabit[]> {
   const userId = await requireUserId();
   const weekday = isoWeekday(parseDayKey(dateKeyValue));
@@ -248,7 +248,7 @@ export type QuotaHabit = {
   paused: boolean;
 };
 
-// QUOTA habits with current-period progress, for the "Hábitos" screen.
+// Hábitos QUOTA con el progreso del periodo actual, para la pantalla "Hábitos".
 export async function getQuotaHabits(tz: string): Promise<QuotaHabit[]> {
   const userId = await requireUserId();
   const now = nowInTz(tz);
@@ -286,9 +286,9 @@ export async function getQuotaHabits(tz: string): Promise<QuotaHabit[]> {
   });
 }
 
-// For QUOTA habits: toggles a single completion within the current period —
-// clicking "done" logs today, clicking again removes whichever log exists
-// in the period (there should only ever be one, since target is always 1).
+// Para hábitos QUOTA: alterna un único cumplimiento dentro del periodo actual
+// — marcar "hecho" registra hoy, volver a marcar quita el registro que exista
+// en el periodo (solo debería haber uno, ya que el objetivo siempre es 1).
 export async function toggleQuotaLog(habitId: string, tz: string): Promise<boolean> {
   const userId = await requireUserId();
   const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });

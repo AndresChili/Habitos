@@ -49,7 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script
-          // Sets data-theme before paint so there's no light/dark flash on load.
+          // Fija data-theme antes de pintar para que no haya parpadeo claro/oscuro al cargar.
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();`,
           }}

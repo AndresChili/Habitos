@@ -4,9 +4,10 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 
-// Centralized authorization check — every data-access function in src/lib
-// calls this to get the current user's id. Memoized per request so multiple
-// calls don't re-verify the cookie repeatedly during one render pass.
+// Comprobación de autorización centralizada — toda función de acceso a datos
+// en src/lib la llama para obtener el id del usuario actual. Memoizada por
+// request para que varias llamadas no reverifiquen la cookie repetidamente
+// durante un mismo render.
 export const requireUserId = cache(async (): Promise<string> => {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;

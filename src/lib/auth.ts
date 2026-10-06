@@ -7,9 +7,9 @@ export const SESSION_COOKIE = "session";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 const BCRYPT_ROUNDS = 12;
 
-// Precomputed bcrypt hash of a random, unused string — compared against on a
-// failed lookup so login takes the same time whether or not the email
-// exists, instead of returning early and leaking that distinction via timing.
+// Hash bcrypt precalculado de una cadena aleatoria sin uso — se compara
+// contra esto cuando la búsqueda falla, para que el login tarde lo mismo
+// exista o no el email, en vez de devolver antes y filtrar esa diferencia por tiempo.
 const DUMMY_HASH = "$2b$12$IIJ.qwoMLS8/rP3FRVqSUOLIq6Ph0B9Y/RutXaRv2.sskwuHuciKG";
 
 export type SessionPayload = { uid: string; exp: number };
@@ -56,8 +56,8 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-// Always runs a bcrypt comparison, even when no user matches — keeps login
-// timing constant regardless of whether the email is registered.
+// Siempre ejecuta una comparación bcrypt, aunque no haya usuario coincidente
+// — mantiene el tiempo de login constante sin importar si el email está registrado.
 export async function verifyPasswordOrDummy(
   password: string,
   hash: string | undefined

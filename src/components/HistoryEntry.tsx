@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteHistoryEntryAction } from "@/app/gym-actions";
-import { IconTrash } from "@/components/icons";
+import { IconTrash, IconStar } from "@/components/icons";
 import { SET_TYPE_SHORT } from "@/lib/gymLabels";
 import type { SetType } from "@/generated/prisma/client";
 
@@ -16,7 +16,7 @@ export default function HistoryEntry({
   id: string;
   exerciseId: string;
   dateLabel: string;
-  sets: { id: string; weightKg: number; reps: number; setType: SetType }[];
+  sets: { id: string; weightKg: number; reps: number; setType: SetType; isPr: boolean }[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -35,7 +35,8 @@ export default function HistoryEntry({
         <p className="text-xs capitalize text-text-faint">{dateLabel}</p>
         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-text">
           {sets.map((s) => (
-            <span key={s.id}>
+            <span key={s.id} className={`inline-flex items-center ${s.isPr ? "text-gold-strong" : ""}`}>
+              {s.isPr && <IconStar className="mr-1 h-3 w-3 shrink-0" />}
               {s.weightKg}×{s.reps}
               <span className="text-xs text-text-faint"> {SET_TYPE_SHORT[s.setType]}</span>
             </span>

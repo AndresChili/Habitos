@@ -66,8 +66,9 @@ export async function updateExercise(
   return { ok: true };
 }
 
-// Archived, never hard-deleted — so WorkoutExercise/RoutineExercise rows
-// referencing it stay valid (see Exercise model comment in schema.prisma).
+// Se archiva, nunca se borra de verdad — así las filas WorkoutExercise/
+// RoutineExercise que lo referencian se mantienen válidas (ver el comentario
+// del modelo Exercise en schema.prisma).
 export async function archiveExercise(id: string) {
   const userId = await requireUserId();
   await prisma.exercise.updateMany({ where: { id, userId }, data: { archivedAt: new Date() } });

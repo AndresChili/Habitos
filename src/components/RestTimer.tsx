@@ -6,6 +6,28 @@ const FALLBACK_SECONDS = 90;
 const STORAGE_KEY = "restTimerDefaultSeconds";
 const PRESETS = [30, 60, 90, 120, 150, 180];
 
+type PersistedState = { endTime: number } | { pausedSecondsLeft: number };
+
+function stateKey(sessionId: string) {
+  return `restTimerState:${sessionId}`;
+}
+
+function loadState(sessionId: string): PersistedState | null {
+  try {
+    const raw = window.localStorage.getItem(stateKey(sessionId));
+    return raw ? (JSON.parse(raw) as PersistedState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveState(sessionId: string, state: PersistedState | null) {
+  try {
+    if (state === null) window.localStorage.removeItem(stateKey(sessionId));
+    else window.localStorage.setItem(stateKey(sessionId), JSON.stringify(state));
+  } catch {}
+}
+
 function formatTime(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
@@ -14,30 +36,54 @@ function formatTime(totalSeconds: number): string {
 
 type WakeLockSentinel = { release: () => Promise<void> };
 
-// A single shared rest timer for the whole workout — resets every time
-// `resetSignal` changes (bump it whenever any set is logged).
+// Un único temporizador de descanso compartido para todo el entreno — se
+// reinicia cada vez que cambia `resetSignal` (se incrementa cada vez que se registra una serie).
 //
-// The countdown is driven off an absolute `endTime` timestamp rather than
-// decrementing a counter every tick, so it reads correctly even after the
-// tab was backgrounded/throttled for a while (mobile browsers suspend
-// setInterval but Date.now() keeps ticking). While it's actively running we
-// also request a screen Wake Lock so the phone doesn't lock to a black
-// screen mid-rest — it's released as soon as the timer is paused, finishes,
-// or the component unmounts.
-export default function RestTimer({ resetSignal }: { resetSignal: number }) {
-  const [defaultSeconds, setDefaultSeconds] = useState(FALLBACK_SECONDS);
-  const [endTime, setEndTime] = useState<number | null>(null);
-  const [secondsLeft, setSecondsLeft] = useState(0);
-  const [running, setRunning] = useState(false);
+// La cuenta atrás se calcula a partir de una marca de tiempo absoluta
+// `endTime`, en vez de ir decrementando un contador en cada tick, para que
+// siga siendo correcta aunque la pestaña haya estado en segundo plano o
+// limitada un rato (los navegadores móviles suspenden setInterval, pero
+// Date.now() sigue avanzando). Esa misma marca absoluta se persiste en
+// localStorage (indexada por sessionId) para que la cuenta atrás sobreviva a
+// navegar a otra pantalla de la app y volver — este componente se desmonta
+// en cada cambio de ruta, así que sin esta persistencia el temporizador se
+// reiniciaría en silencio. Mientras está corriendo también se pide un Wake
+// Lock de pantalla para que el móvil no se bloquee a mitad del descanso — se
+// libera en cuanto el temporizador se pausa, termina, o el componente se desmonta.
+
+// Lee cualquier cuenta atrás en curso de esta sesión desde localStorage para
+// poder restaurar el temporizador en el primer render mediante un
+// inicializador diferido de useState (evita un parpadeo de reinicio antes de
+// que un efecto lo corrigiera).
+function restoreCountdown(sessionId: string): { endTime: number | null; secondsLeft: number; running: boolean } {
+  const stored = loadState(sessionId);
+  if (!stored) return { endTime: null, secondsLeft: 0, running: false };
+  if ("endTime" in stored) {
+    const remaining = Math.max(0, Math.round((stored.endTime - Date.now()) / 1000));
+    if (remaining > 0) return { endTime: stored.endTime, secondsLeft: remaining, running: true };
+    saveState(sessionId, null);
+    return { endTime: null, secondsLeft: 0, running: false };
+  }
+  return { endTime: null, secondsLeft: stored.pausedSecondsLeft, running: false };
+}
+
+function readDefaultSeconds(): number {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    return stored ? Number(stored) : FALLBACK_SECONDS;
+  } catch {
+    return FALLBACK_SECONDS;
+  }
+}
+
+export default function RestTimer({ sessionId, resetSignal }: { sessionId: string; resetSignal: number }) {
+  const [defaultSeconds, setDefaultSeconds] = useState(readDefaultSeconds);
+  const [initial] = useState(() => restoreCountdown(sessionId));
+  const [endTime, setEndTime] = useState<number | null>(initial.endTime);
+  const [secondsLeft, setSecondsLeft] = useState(initial.secondsLeft);
+  const [running, setRunning] = useState(initial.running);
   const firstRender = useRef(true);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored) setDefaultSeconds(Number(stored));
-    } catch {}
-  }, []);
 
   function chooseDefault(seconds: number) {
     setDefaultSeconds(seconds);
@@ -51,22 +97,27 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
       firstRender.current = false;
       return;
     }
-    setEndTime(Date.now() + defaultSeconds * 1000);
+    const next = Date.now() + defaultSeconds * 1000;
+    setEndTime(next);
     setSecondsLeft(defaultSeconds);
     setRunning(true);
+    saveState(sessionId, { endTime: next });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal]);
 
-  // Recompute remaining time from the absolute end timestamp, not from the
-  // previous tick — this is what keeps the number correct across a
-  // background/throttle gap instead of just freezing or drifting.
+  // Recalcula el tiempo restante a partir de la marca de tiempo absoluta de
+  // fin, no del tick anterior — esto es lo que mantiene el número correcto
+  // tras un hueco en segundo plano/limitación, en vez de quedarse congelado o desviarse.
   useEffect(() => {
     if (!running || endTime === null) return;
 
     function tick() {
       const remaining = Math.max(0, Math.round(((endTime as number) - Date.now()) / 1000));
       setSecondsLeft(remaining);
-      if (remaining <= 0) setRunning(false);
+      if (remaining <= 0) {
+        setRunning(false);
+        saveState(sessionId, null);
+      }
     }
 
     tick();
@@ -76,11 +127,12 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
       clearInterval(id);
       document.removeEventListener("visibilitychange", tick);
     };
-  }, [running, endTime]);
+  }, [running, endTime, sessionId]);
 
-  // Keep the screen awake for the duration of the rest countdown so it
-  // doesn't lock mid-rest; re-acquire on visibility change since the OS
-  // releases the lock automatically when the tab is hidden.
+  // Mantiene la pantalla encendida mientras dura la cuenta atrás de descanso
+  // para que no se bloquee a mitad; se vuelve a pedir en cada cambio de
+  // visibilidad porque el sistema operativo libera el lock automáticamente
+  // cuando la pestaña se oculta.
   useEffect(() => {
     const active = running && secondsLeft > 0;
     const nav = navigator as Navigator & { wakeLock?: { request: (type: "screen") => Promise<WakeLockSentinel> } };
@@ -152,9 +204,12 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
               if (running) {
                 setEndTime(null);
                 setRunning(false);
+                saveState(sessionId, { pausedSecondsLeft: secondsLeft });
               } else {
-                setEndTime(Date.now() + secondsLeft * 1000);
+                const next = Date.now() + secondsLeft * 1000;
+                setEndTime(next);
                 setRunning(true);
+                saveState(sessionId, { endTime: next });
               }
             }}
             className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
@@ -167,6 +222,7 @@ export default function RestTimer({ resetSignal }: { resetSignal: number }) {
               setEndTime(null);
               setSecondsLeft(0);
               setRunning(false);
+              saveState(sessionId, null);
             }}
             className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-medium text-text-muted active:scale-95"
           >

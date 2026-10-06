@@ -46,8 +46,8 @@ export async function loginAction(formData: FormData) {
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
-  // Always runs bcrypt, matched or not, so response time doesn't reveal
-  // whether the email is registered.
+  // Siempre ejecuta bcrypt, coincida o no, para que el tiempo de respuesta
+  // no revele si el email está registrado.
   const valid = await verifyPasswordOrDummy(password, user?.passwordHash);
   await recordLoginAttempt(email, valid);
 

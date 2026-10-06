@@ -29,8 +29,8 @@ export default function GymTodayCard({
     });
   }
 
-  // Already started (or finished) today — whatever routine (or none) it's
-  // actually running, regardless of what's permanently assigned to today.
+  // Ya se empezó (o terminó) hoy — sea cual sea la rutina (o ninguna) que
+  // esté corriendo de verdad, al margen de lo que esté asignado hoy de forma permanente.
   if (status.session) {
     if (status.session.status === "COMPLETED") {
       return (
@@ -106,7 +106,7 @@ export default function GymTodayCard({
     );
   }
 
-  // Nothing started yet today.
+  // Todavía no se ha empezado nada hoy.
   if (!expanded) {
     return (
       <button

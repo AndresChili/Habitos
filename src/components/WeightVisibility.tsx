@@ -2,9 +2,10 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-// Shared open/closed state between the "Peso" chip on Hoy and the weight
-// quick-input card below it — they're not siblings in the tree, so this is
-// how clicking the chip can toggle a card rendered elsewhere on the page.
+// Estado abierto/cerrado compartido entre el chip de "Peso" en Hoy y la
+// tarjeta de entrada rápida de peso de más abajo — no son hermanos en el
+// árbol, así que esto es lo que permite que al pulsar el chip se alterne una
+// tarjeta renderizada en otra parte de la página.
 type WeightVisibility = { open: boolean; setOpen: (open: boolean) => void };
 
 const WeightVisibilityContext = createContext<WeightVisibility | null>(null);

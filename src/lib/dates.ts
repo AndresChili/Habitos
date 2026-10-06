@@ -15,8 +15,9 @@ import {
 
 const DAY_KEY = "yyyy-MM-dd";
 
-// All calendar math (day/week/month boundaries) happens on the zoned "wall clock"
-// date, never on raw UTC instants — this sidesteps DST and offset bugs entirely.
+// Todo el cálculo de calendario (límites de día/semana/mes) se hace sobre la
+// fecha "de reloj de pared" en la zona horaria, nunca sobre instantes UTC en
+// crudo — esto evita por completo los errores de DST y de desfase horario.
 export function nowInTz(timezone: string): Date {
   return toZonedTime(new Date(), timezone);
 }
@@ -50,7 +51,7 @@ export function daysBetweenInclusive(start: Date, end: Date): Date[] {
   return Array.from({ length: count }, (_, i) => addDays(start, i));
 }
 
-// ISO weekday, 1=Monday..7=Sunday — matches Habit.weekdays encoding.
+// Día de la semana ISO, 1=lunes..7=domingo — coincide con la codificación de Habit.weekdays.
 export function isoWeekday(date: Date): number {
   return getISODay(date);
 }

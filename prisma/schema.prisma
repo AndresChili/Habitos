@@ -17,8 +17,8 @@ enum QuotaPeriod {
   MONTH
 }
 
-// One account per person. All other data hangs off userId so every query can
-// be scoped to "only what this user owns" — see src/lib/dal.ts.
+// Una cuenta por persona. Todo lo demás cuelga de userId para que cualquier
+// consulta pueda limitarse a "solo lo que pertenece a este usuario" — ver src/lib/dal.ts.
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -40,9 +40,9 @@ model User {
   setEntries       SetEntry[]
 }
 
-// Failed/succeeded login & signup attempts, keyed by the submitted email —
-// not a FK to User, so we can rate-limit attempts against emails that don't
-// exist yet without leaking that distinction via timing or errors.
+// Intentos de login/registro, fallidos o correctos, indexados por el email
+// enviado — no es una FK a User, para poder limitar intentos contra emails
+// que todavía no existen sin filtrar esa distinción por tiempo o errores.
 model LoginAttempt {
   id        String   @id @default(cuid())
   email     String
@@ -52,9 +52,10 @@ model LoginAttempt {
   @@index([email, createdAt])
 }
 
-// FIXED_DAYS habits are due on specific weekdays (1=Monday..7=Sunday, ISO) —
-// checked off from "Hoy". QUOTA habits just need N completions within the
-// period, any days; checked off from "Hábitos" since there's no single "due" day.
+// Los hábitos FIXED_DAYS vencen en días concretos de la semana (1=lunes..7=domingo,
+// ISO) — se marcan desde "Hoy". Los QUOTA solo necesitan N cumplimientos dentro
+// del periodo, en cualquier día; se marcan desde "Hábitos" porque no tienen un
+// único día de vencimiento.
 model Habit {
   id             String          @id @default(cuid())
   userId         String
@@ -72,11 +73,12 @@ model Habit {
   @@index([userId, archivedAt])
 }
 
-// A habit can be paused/resumed repeatedly; each window is recorded so past
-// calendar days stay correctly marked "not scheduled" even after resuming.
-// toDate null = pause still active. userId is denormalized from Habit so
-// every query can filter by owner directly, without a join, as a second
-// line of defense against cross-user access.
+// Un hábito se puede pausar/reanudar repetidamente; cada periodo se registra
+// para que los días pasados sigan marcados correctamente como "no programado"
+// incluso después de reanudar. toDate null = pausa todavía activa. userId está
+// desnormalizado desde Habit para que cualquier consulta pueda filtrar por
+// propietario directamente, sin join, como segunda línea de defensa frente a
+// accesos entre usuarios.
 model HabitPause {
   id       String   @id @default(cuid())
   habitId  String
@@ -90,10 +92,11 @@ model HabitPause {
   @@index([userId])
 }
 
-// date is "YYYY-MM-DD" in the app timezone — avoids DST/UTC-boundary bugs,
-// since we only ever compare calendar days, not instants. One row per
-// completion date regardless of habit type (FIXED_DAYS or QUOTA). userId is
-// denormalized from Habit, same reasoning as HabitPause.
+// date es "YYYY-MM-DD" en la zona horaria de la app — evita errores de DST/
+// límites UTC, ya que solo se comparan días de calendario, nunca instantes.
+// Una fila por fecha de cumplimiento, sin importar el tipo de hábito
+// (FIXED_DAYS o QUOTA). userId está desnormalizado desde Habit, mismo
+// motivo que en HabitPause.
 model HabitLog {
   id        String   @id @default(cuid())
   habitId   String
@@ -121,7 +124,7 @@ model Task {
   @@index([userId, date])
 }
 
-// One entry per day, entered from "Hoy", surfaced with history/graph on "Peso".
+// Una entrada por día, introducida desde "Hoy", mostrada con histórico/gráfica en "Peso".
 model WeightLog {
   id        String   @id @default(cuid())
   userId    String
@@ -133,9 +136,10 @@ model WeightLog {
   @@unique([userId, date])
 }
 
-// One row per user. gymWeekdays uses the same ISO weekday encoding as
-// Habit.weekdays (1=Monday..7=Sunday) — which days the user trains at all,
-// independent of which routine runs on each of those days (see Routine.weekdays).
+// Una fila por usuario. gymWeekdays usa la misma codificación ISO de día de
+// semana que Habit.weekdays (1=lunes..7=domingo) — qué días entrena el
+// usuario en general, independientemente de qué rutina toque cada uno de
+// esos días (ver Routine.weekdays).
 model Settings {
   id           String @id @default(cuid())
   userId       String @unique
@@ -180,10 +184,10 @@ enum WorkoutStatus {
   COMPLETED
 }
 
-// Every exercise is created by a user — no predefined/global library.
-// Exercises are only ever archived, never hard-deleted — RoutineExercise and
-// WorkoutExercise both reference Exercise with onDelete: Restrict as a
-// safety net, so historical sets can never be orphaned by a deletion.
+// Cada ejercicio lo crea un usuario — no hay biblioteca predefinida/global.
+// Los ejercicios solo se archivan, nunca se borran de verdad — RoutineExercise
+// y WorkoutExercise referencian Exercise con onDelete: Restrict como red de
+// seguridad, así las series históricas nunca pueden quedar huérfanas por un borrado.
 model Exercise {
   id               String        @id @default(cuid())
   userId           String
@@ -202,12 +206,12 @@ model Exercise {
   @@index([userId, archivedAt])
 }
 
-// A reusable template. Deleting/editing a routine never touches past
-// WorkoutSessions — those hold their own WorkoutExercise/SetEntry rows that
-// don't reference RoutineExercise at all (see WorkoutSession below).
-// weekdays: which day(s) this routine runs on (1=Monday..7=Sunday, same
-// encoding as Habit.weekdays). Enforced in application code to be exclusive
-// — assigning a day to one routine clears it from any other.
+// Una plantilla reutilizable. Borrar/editar una rutina nunca afecta a los
+// WorkoutSession pasados — estos tienen sus propias filas WorkoutExercise/
+// SetEntry que no referencian RoutineExercise en absoluto (ver WorkoutSession
+// más abajo). weekdays: qué día(s) usa esta rutina (1=lunes..7=domingo, misma
+// codificación que Habit.weekdays). Se fuerza en el código de la aplicación
+// que sea exclusivo — asignar un día a una rutina se lo quita a cualquier otra.
 model Routine {
   id          String    @id @default(cuid())
   userId      String
@@ -224,9 +228,9 @@ model Routine {
   @@index([userId, archivedAt])
 }
 
-// An exercise placed inside a routine, in order. targetRepMin/Max is
-// optional and belongs here (not on Exercise) because the same exercise can
-// have a different rep target in different routines.
+// Un ejercicio colocado dentro de una rutina, con orden. targetRepMin/Max es
+// opcional y va aquí (no en Exercise) porque el mismo ejercicio puede tener
+// un objetivo de repeticiones distinto en cada rutina.
 model RoutineExercise {
   id           String   @id @default(cuid())
   routineId    String
@@ -243,11 +247,11 @@ model RoutineExercise {
   @@index([userId])
 }
 
-// One real training session. routineName is a snapshot taken at creation so
-// history still reads correctly after the routine is renamed or deleted
-// (routineId goes null, routineName stays). Created the moment the user taps
-// "Empezar" (status IN_PROGRESS) so progress is durable from the first set,
-// not held only in client memory.
+// Un entrenamiento real. routineName es una foto fija tomada al crearse para
+// que el historial se siga leyendo bien aunque la rutina se renombre o se
+// borre después (routineId pasa a null, routineName se queda). Se crea en el
+// momento en que el usuario pulsa "Empezar" (status IN_PROGRESS) para que el
+// progreso sea duradero desde la primera serie, no solo en memoria del cliente.
 model WorkoutSession {
   id          String        @id @default(cuid())
   userId      String
@@ -255,9 +259,9 @@ model WorkoutSession {
   routineId   String?
   routine     Routine?      @relation(fields: [routineId], references: [id], onDelete: SetNull)
   routineName String
-  // "YYYY-MM-DD" in the user's timezone at creation time — same dayKey
-  // convention as Habit/Task, used to answer "is there already a session
-  // for this routine today" without timezone-sensitive instant-range queries.
+  // "YYYY-MM-DD" en la zona horaria del usuario al crearse — misma convención
+  // dayKey que Habit/Task, usada para responder "ya hay una sesión de esta
+  // rutina hoy" sin consultas por rango de instantes sensibles al huso horario.
   dateKey     String
   status      WorkoutStatus @default(IN_PROGRESS)
   startedAt   DateTime      @default(now())
@@ -269,9 +273,9 @@ model WorkoutSession {
   @@index([userId, routineId, dateKey])
 }
 
-// One exercise as actually performed within a session. References Exercise
-// directly (not RoutineExercise) so it survives any later edit to the
-// routine it came from.
+// Un ejercicio tal como se realizó de verdad dentro de una sesión. Referencia
+// Exercise directamente (no RoutineExercise) para que sobreviva a cualquier
+// edición posterior de la rutina de la que vino.
 model WorkoutExercise {
   id               String         @id @default(cuid())
   workoutSessionId String
@@ -299,6 +303,7 @@ model SetEntry {
   weightKg          Float
   reps              Int
   setType           SetType         @default(NORMAL)
+  isPr              Boolean         @default(false)
   createdAt         DateTime        @default(now())
 
   @@index([workoutExerciseId, order])

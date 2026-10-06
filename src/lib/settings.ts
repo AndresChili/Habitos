@@ -4,8 +4,8 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal";
 import type { Settings } from "@/generated/prisma/client";
 
-// Memoized per request — several loaders (habits, workouts) each need
-// settings, and without this every one of them re-queries it separately.
+// Memoizado por request — varios loaders (hábitos, entrenamientos) necesitan
+// settings cada uno, y sin esto cada uno volvería a consultarlo por separado.
 export const getSettings = cache(async (): Promise<Settings> => {
   const userId = await requireUserId();
   const existing = await prisma.settings.findUnique({ where: { userId } });

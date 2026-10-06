@@ -7,9 +7,10 @@ export async function getWeightForDate(date: string) {
   return prisma.weightLog.findUnique({ where: { userId_date: { userId, date } } });
 }
 
-// Most recent entry strictly before `date` — used to suggest a starting
-// value when today has no entry yet, however many days ago it was. Never
-// written to the DB on its own; only used to pre-fill the input.
+// La entrada más reciente estrictamente anterior a `date` — se usa para
+// sugerir un valor inicial cuando hoy todavía no tiene entrada, sin importar
+// cuántos días hace que fue. Nunca se escribe sola en la BD; solo sirve para
+// rellenar el input por defecto.
 export async function getLatestWeightBefore(date: string) {
   const userId = await requireUserId();
   return prisma.weightLog.findFirst({
@@ -18,7 +19,8 @@ export async function getLatestWeightBefore(date: string) {
   });
 }
 
-// One entry per day, entered from "Hoy" — upsert so re-entering the same day corrects it.
+// Una entrada por día, introducida desde "Hoy" — upsert para que volver a
+// introducir el mismo día lo corrija.
 export async function setWeight(
   date: string,
   weightKg: number

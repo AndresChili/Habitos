@@ -40,8 +40,8 @@ export default function WeightQuickInput({
     });
   }
 
-  // Once today's weight is saved, this card gets out of the way — the Peso
-  // chip above is what brings it back to make a change.
+  // En cuanto se guarda el peso de hoy, esta tarjeta se quita de en medio —
+  // el chip de Peso de arriba es lo que la vuelve a traer para hacer un cambio.
   if (saved && !open) return null;
 
   return (

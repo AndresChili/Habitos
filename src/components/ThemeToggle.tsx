@@ -22,8 +22,14 @@ function applyTheme(theme: Theme) {
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("system");
 
+  // Lee localStorage solo después de montar, coincidiendo con el estado
+  // "system" renderizado en servidor en el primer pintado — un script
+  // inline en layout.tsx ya aplica el tema real antes de pintar, esto solo
+  // sincroniza qué botón del selector aparece activo, y tiene que seguir
+  // siendo un efecto para evitar un desajuste de hidratación cliente/servidor.
   useEffect(() => {
     const stored = localStorage.getItem("theme");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(stored === "light" || stored === "dark" ? stored : "system");
   }, []);
 

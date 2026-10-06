@@ -126,8 +126,8 @@ export async function startWorkoutAction(routineId: string) {
   redirect(`/gimnasio/entrenar/${result.id}`);
 }
 
-// Starts today's workout with no routine at all — exercises get added
-// manually once inside. Never touches any Routine or its weekday assignment.
+// Empieza el entreno de hoy sin ninguna rutina — los ejercicios se añaden a
+// mano una vez dentro. Nunca toca ninguna Routine ni su día de la semana asignado.
 export async function startFreeformWorkoutAction(name?: string) {
   const result = await startFreeformSession(name);
   redirect(`/gimnasio/entrenar/${result.id}`);
@@ -187,16 +187,16 @@ export async function removeExerciseFromSessionAction(workoutExerciseId: string,
   revalidatePath(`/gimnasio/entrenar/${sessionId}`);
 }
 
-// Past sessions' sets for this exercise, for the "ver entrenos anteriores"
-// button inside an active workout card — so the user can see what weight
-// they used before deciding what to put for each set now.
+// Series de sesiones pasadas de este ejercicio, para el botón "ver entrenos
+// anteriores" dentro de una tarjeta de entreno activo — así el usuario puede
+// ver qué peso usó antes de decidir qué poner en cada serie ahora.
 export async function getExerciseHistoryAction(exerciseId: string) {
   const history = await listExerciseHistory(exerciseId, 8);
   return history.map((h) => ({
     id: h.id,
     date: h.workoutSession.startedAt,
     routineName: h.workoutSession.routineName,
-    sets: h.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps, setType: s.setType })),
+    sets: h.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps, setType: s.setType, isPr: s.isPr })),
   }));
 }
 

@@ -23,8 +23,8 @@ function cleanWeekdays(weekdays: number[]): number[] {
   return Array.from(new Set(weekdays.filter((d) => Number.isInteger(d) && d >= 1 && d <= 7))).sort();
 }
 
-// A weekday belongs to at most one routine — assigning it here clears it
-// from whichever other routine of this user currently has it.
+// Un día de la semana pertenece como mucho a una rutina — asignarlo aquí lo
+// quita de cualquier otra rutina de este usuario que lo tuviera.
 async function claimWeekdaysExclusively(userId: string, routineId: string | null, weekdays: number[]) {
   if (weekdays.length === 0) return;
   const others = await prisma.routine.findMany({
@@ -63,7 +63,7 @@ export async function updateRoutineWeekdays(id: string, weekdays: number[]) {
   await prisma.routine.updateMany({ where: { id, userId }, data: { weekdays: clean } });
 }
 
-// The routine assigned to a given weekday (1=Monday..7=Sunday), if any.
+// La rutina asignada a un día de la semana dado (1=lunes..7=domingo), si existe.
 export async function getRoutineForWeekday(weekday: number) {
   const userId = await requireUserId();
   return prisma.routine.findFirst({ where: { userId, archivedAt: null, weekdays: { has: weekday } } });
@@ -95,9 +95,9 @@ export async function restoreRoutine(id: string) {
   await prisma.routine.updateMany({ where: { id, userId }, data: { archivedAt: null } });
 }
 
-// Real delete, requested explicitly — past WorkoutSessions survive because
-// WorkoutSession.routineId is onDelete: SetNull and routineName is a
-// snapshot taken at session start, so history keeps reading correctly.
+// Borrado real, pedido explícitamente — los WorkoutSession pasados sobreviven
+// porque WorkoutSession.routineId es onDelete: SetNull y routineName es una
+// foto fija tomada al empezar la sesión, así el historial se sigue leyendo bien.
 export async function deleteRoutine(id: string) {
   const userId = await requireUserId();
   await prisma.routine.deleteMany({ where: { id, userId } });
@@ -151,8 +151,8 @@ export async function removeExerciseFromRoutine(id: string) {
   await prisma.routineExercise.deleteMany({ where: { id, userId } });
 }
 
-// `orderedIds` is the full list of RoutineExercise ids for this routine, in
-// the desired new order.
+// `orderedIds` es la lista completa de ids de RoutineExercise de esta rutina,
+// en el nuevo orden deseado.
 export async function reorderRoutineExercises(routineId: string, orderedIds: string[]) {
   const userId = await requireUserId();
   const owned = await prisma.routineExercise.findMany({

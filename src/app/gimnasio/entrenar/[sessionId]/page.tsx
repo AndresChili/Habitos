@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getSession, getLastPerformance, getSuggestion } from "@/lib/workouts";
+import { getSession, getLastPerformance, getSuggestion, getBestWeightEver } from "@/lib/workouts";
 import { listExercises } from "@/lib/exercises";
 import { prisma } from "@/lib/db";
 import ActiveWorkout, { type ActiveExercise } from "@/components/ActiveWorkout";
@@ -21,9 +21,10 @@ export default async function EntrenarPage({ params }: { params: Promise<{ sessi
 
   const exercises: ActiveExercise[] = await Promise.all(
     session.exercises.map(async (we) => {
-      const [lastPerformance, suggestion] = await Promise.all([
+      const [lastPerformance, suggestion, bestWeightEver] = await Promise.all([
         getLastPerformance(we.exerciseId, sessionId),
         we.sets.length > 0 ? getSuggestion(we.exerciseId, sessionId) : Promise.resolve(null),
+        getBestWeightEver(we.exerciseId),
       ]);
       const target = targetByExercise.get(we.exerciseId);
 
@@ -35,7 +36,8 @@ export default async function EntrenarPage({ params }: { params: Promise<{ sessi
         targetRepMin: target?.targetRepMin ?? null,
         targetRepMax: target?.targetRepMax ?? null,
         lastPerformance: lastPerformance ? { sets: lastPerformance.sets } : null,
-        initialSets: we.sets.map((s) => ({ id: s.id, weightKg: s.weightKg, reps: s.reps, setType: s.setType })),
+        initialSets: we.sets.map((s) => ({ id: s.id, weightKg: s.weightKg, reps: s.reps, setType: s.setType, isPr: s.isPr })),
+        bestWeightEver,
         suggestion,
       };
     })

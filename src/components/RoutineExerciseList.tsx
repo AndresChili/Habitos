@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   removeExerciseFromRoutineAction,
   reorderRoutineExercisesAction,
@@ -91,9 +91,17 @@ export default function RoutineExerciseList({
   items: RoutineExerciseItem[];
 }) {
   const [list, setList] = useState(items);
+  const [prevItems, setPrevItems] = useState(items);
   const [, startTransition] = useTransition();
 
-  useEffect(() => setList(items), [items]);
+  // Reinicia el orden local cada vez que el servidor envía un `items` nuevo
+  // (ej. tras añadir/quitar un ejercicio en otro sitio) — ajustando el
+  // estado durante el render en vez de en un efecto, siguiendo la
+  // recomendación de React para este patrón.
+  if (items !== prevItems) {
+    setPrevItems(items);
+    setList(items);
+  }
 
   function persistOrder(next: RoutineExerciseItem[]) {
     setList(next);

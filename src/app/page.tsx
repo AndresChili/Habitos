@@ -45,9 +45,9 @@ export default async function TodayPage({
 
   const habitsDone = habits.filter((h) => h.done).length;
   const pendingTasks = tasks.filter((t) => !t.done).length;
-  // A fixed, short label (the weekday) instead of the routine name — a long
-  // routine name would otherwise make this card grow relative to the other
-  // two on the row.
+  // Una etiqueta corta y fija (el día de la semana) en vez del nombre de la
+  // rutina — un nombre largo haría que esta tarjeta creciera respecto a las
+  // otras dos de la fila.
   const gymChipLabel = WEEKDAY_NAMES[isoWeekday(nowInTz(tz)) - 1];
 
   return (

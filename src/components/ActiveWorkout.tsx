@@ -16,7 +16,8 @@ export type ActiveExercise = {
   targetRepMin: number | null;
   targetRepMax: number | null;
   lastPerformance: { sets: { weightKg: number; reps: number; setType: SetType }[] } | null;
-  initialSets: { id: string; weightKg: number; reps: number; setType: SetType }[];
+  initialSets: { id: string; weightKg: number; reps: number; setType: SetType; isPr: boolean }[];
+  bestWeightEver: number | null;
   suggestion: { text: string } | null;
 };
 
@@ -35,9 +36,9 @@ export default function ActiveWorkout({
 }) {
   const [resetSignal, setResetSignal] = useState(0);
   const [pending, startTransition] = useTransition();
-  // Only one card is expanded at a time (accordion). Start on the first
-  // exercise that doesn't have sets logged yet — everything else (including
-  // already-saved exercises) starts collapsed.
+  // Solo una tarjeta está expandida a la vez (acordeón). Empieza en el
+  // primer ejercicio que todavía no tiene series registradas — el resto
+  // (incluidos los ya guardados) empieza colapsado.
   const [openId, setOpenId] = useState<string | null>(
     () => exercises.find((e) => e.initialSets.length === 0)?.workoutExerciseId ?? exercises[0]?.workoutExerciseId ?? null
   );
@@ -49,10 +50,10 @@ export default function ActiveWorkout({
         <h1 className="text-xl font-semibold tracking-tight text-text">{routineName}</h1>
       </header>
 
-      {!completed && <RestTimer resetSignal={resetSignal} />}
+      {!completed && <RestTimer sessionId={sessionId} resetSignal={resetSignal} />}
 
       <div className="space-y-3">
-        {exercises.map((ex, index) => (
+        {exercises.map((ex) => (
           <WorkoutExerciseCard
             key={ex.workoutExerciseId}
             workoutExerciseId={ex.workoutExerciseId}
@@ -64,11 +65,12 @@ export default function ActiveWorkout({
             targetRepMax={ex.targetRepMax}
             lastPerformance={ex.lastPerformance}
             initialSets={ex.initialSets}
+            bestWeightEver={ex.bestWeightEver}
             suggestion={ex.suggestion}
             onSetLogged={() => setResetSignal((n) => n + 1)}
             open={openId === ex.workoutExerciseId}
             onOpen={() => setOpenId(ex.workoutExerciseId)}
-            onSaved={() => setOpenId(exercises[index + 1]?.workoutExerciseId ?? null)}
+            onSaved={() => setOpenId(null)}
             readOnly={completed}
           />
         ))}

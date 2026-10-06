@@ -6,12 +6,12 @@ import { getRoutineForWeekday } from "@/lib/routines";
 import { dayKey, isoWeekday, nowInTz } from "@/lib/dates";
 import type { SetType } from "@/generated/prisma/client";
 
-// ---- Sessions ----
+// ---- Sesiones ----
 
-// Resumes an existing in-progress session for this routine if there is one,
-// otherwise creates a new one pre-populated with the routine's current
-// exercise list (in order). Created immediately in the DB (not held in
-// client state) so closing the app mid-workout never loses progress.
+// Retoma una sesión en curso de esta rutina si ya existe, o crea una nueva
+// precargada con la lista actual de ejercicios de la rutina (en orden). Se
+// crea en la BD al instante (no se mantiene en estado del cliente) para que
+// cerrar la app a mitad de entreno nunca pierda el progreso.
 export async function startOrResumeSession(
   routineId: string
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
@@ -47,13 +47,13 @@ export async function startOrResumeSession(
   return { ok: true, id: session.id };
 }
 
-// ---- "Hoy" integration ----
+// ---- Integración con "Hoy" ----
 
-// assignedRoutine is whichever routine is permanently assigned to today's
-// weekday (Routine.weekdays) — it's only a default suggestion. `session` is
-// whatever was actually started today, which may run a *different* routine
-// (the user chose "Cambiar rutina") or no routine at all (freeform) — so we
-// look up any session for today, not one scoped to assignedRoutine.
+// assignedRoutine es la rutina asignada de forma permanente al día de la
+// semana actual (Routine.weekdays) — es solo una sugerencia por defecto.
+// `session` es lo que de verdad se empezó hoy, que puede ser una rutina
+// *distinta* (el usuario eligió "Cambiar rutina") o ninguna (libre) — por eso
+// buscamos cualquier sesión de hoy, no una limitada a assignedRoutine.
 export type TodayGymStatus =
   | { scheduled: false }
   | {
@@ -86,9 +86,9 @@ export async function getTodayGymStatus(): Promise<TodayGymStatus> {
     }),
   ]);
 
-  // A workout started today (e.g. freeform, or before the schedule changed)
-  // still needs to show up and be resumable even on a day with no routine
-  // assigned — only hide the card when there's truly nothing going on.
+  // Un entreno empezado hoy (ej. libre, o antes de cambiar la programación)
+  // tiene que seguir apareciendo y poder retomarse aunque hoy no tenga rutina
+  // asignada — la tarjeta solo se oculta cuando de verdad no hay nada.
   if (!isScheduledDay && !session) return { scheduled: false };
 
   return {
@@ -106,8 +106,8 @@ export async function getTodayGymStatus(): Promise<TodayGymStatus> {
   };
 }
 
-// A one-off session not tied to any Routine — "I'll build today's workout
-// manually." Never touches Routine.weekdays or any routine's exercise list.
+// Una sesión suelta no ligada a ninguna Routine — "hoy monto el entreno a
+// mano". Nunca toca Routine.weekdays ni la lista de ejercicios de ninguna rutina.
 export async function startFreeformSession(
   name?: string
 ): Promise<{ ok: true; id: string }> {
@@ -131,7 +131,7 @@ export async function startFreeformSession(
   return { ok: true, id: session.id };
 }
 
-// ---- Session-only exercise changes (never touch the Routine template) ----
+// ---- Cambios de ejercicios solo de la sesión (nunca tocan la plantilla Routine) ----
 
 export async function addExerciseToSession(
   sessionId: string,
@@ -155,9 +155,8 @@ export async function addExerciseToSession(
   return { ok: true };
 }
 
-// Removes this exercise (and any sets logged for it) from today's session
-// only — the Routine it came from, and every other day's history, is
-// untouched.
+// Quita este ejercicio (y las series registradas en él) solo de la sesión de
+// hoy — la Routine de la que vino, y el historial de cualquier otro día, no se tocan.
 export async function removeExerciseFromSession(workoutExerciseId: string) {
   const userId = await requireUserId();
   await prisma.workoutExercise.deleteMany({
@@ -186,16 +185,16 @@ export async function finishSession(id: string) {
   });
 }
 
-// Deletes a whole session (in progress or completed) with its exercises and
-// sets — e.g. a test run. Unlike finishing, this removes it entirely so it
-// stops counting toward records and no longer shows up on Hoy.
+// Borra una sesión entera (en curso o completada) con sus ejercicios y
+// series — ej. una prueba. A diferencia de finalizar, esto la elimina del
+// todo, así deja de contar para los récords y de aparecer en Hoy.
 export async function deleteSession(id: string) {
   const userId = await requireUserId();
   await prisma.workoutSession.deleteMany({ where: { id, userId } });
 }
 
-// All sessions (any status) whose dateKey falls in the given month —
-// dateKey is "yyyy-MM-dd" so plain string bounds are safe here.
+// Todas las sesiones (cualquier estado) cuyo dateKey cae dentro del mes dado
+// — dateKey es "yyyy-MM-dd", así que comparar como string plano es seguro aquí.
 export async function listSessionsForMonth(monthKey: string) {
   const userId = await requireUserId();
   const sessions = await prisma.workoutSession.findMany({
@@ -223,14 +222,38 @@ export async function listSessions(limit = 30) {
   });
 }
 
-// ---- Sets ----
+// ---- Series ----
+
+// El peso más alto (sin contar calentamientos) registrado jamás para este
+// ejercicio, en cualquier sesión (completada o todavía en curso) — la base
+// contra la que se compara una serie nueva para decidir si es PR.
+// `excludeSetId` permite que una serie en edición se compare contra todo lo
+// demás, no contra su propio valor desactualizado.
+export async function getBestWeightEver(exerciseId: string, excludeSetId?: string): Promise<number | null> {
+  const userId = await requireUserId();
+  const best = await prisma.setEntry.findFirst({
+    where: {
+      userId,
+      setType: { not: "WARMUP" },
+      workoutExercise: { exerciseId },
+      ...(excludeSetId ? { id: { not: excludeSetId } } : {}),
+    },
+    orderBy: { weightKg: "desc" },
+    select: { weightKg: true },
+  });
+  return best?.weightKg ?? null;
+}
+
+function isNewPr(setType: SetType, weightKg: number, bestWeightEver: number | null): boolean {
+  return setType !== "WARMUP" && (bestWeightEver === null || weightKg > bestWeightEver);
+}
 
 export async function addSet(
   workoutExerciseId: string,
   weightKg: number,
   reps: number,
   setType: SetType
-): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+): Promise<{ ok: true; id: string; isPr: boolean } | { ok: false; error: string }> {
   const userId = await requireUserId();
   if (!Number.isFinite(weightKg) || weightKg < 0 || weightKg > 500) {
     return { ok: false, error: "Peso inválido." };
@@ -244,14 +267,15 @@ export async function addSet(
   });
   if (!workoutExercise) return { ok: false, error: "Ejercicio de sesión no encontrado." };
 
-  const last = await prisma.setEntry.findFirst({
-    where: { workoutExerciseId },
-    orderBy: { order: "desc" },
-  });
+  const [last, bestWeightEver] = await Promise.all([
+    prisma.setEntry.findFirst({ where: { workoutExerciseId }, orderBy: { order: "desc" } }),
+    getBestWeightEver(workoutExercise.exerciseId),
+  ]);
+  const isPr = isNewPr(setType, weightKg, bestWeightEver);
   const set = await prisma.setEntry.create({
-    data: { workoutExerciseId, userId, order: (last?.order ?? -1) + 1, weightKg, reps, setType },
+    data: { workoutExerciseId, userId, order: (last?.order ?? -1) + 1, weightKg, reps, setType, isPr },
   });
-  return { ok: true, id: set.id };
+  return { ok: true, id: set.id, isPr };
 }
 
 export async function updateSet(
@@ -259,7 +283,7 @@ export async function updateSet(
   weightKg: number,
   reps: number,
   setType: SetType
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; isPr: boolean } | { ok: false; error: string }> {
   const userId = await requireUserId();
   if (!Number.isFinite(weightKg) || weightKg < 0 || weightKg > 500) {
     return { ok: false, error: "Peso inválido." };
@@ -267,8 +291,17 @@ export async function updateSet(
   if (!Number.isInteger(reps) || reps < 1 || reps > 100) {
     return { ok: false, error: "Repeticiones inválidas." };
   }
-  await prisma.setEntry.updateMany({ where: { id, userId }, data: { weightKg, reps, setType } });
-  return { ok: true };
+
+  const existing = await prisma.setEntry.findFirst({
+    where: { id, userId },
+    include: { workoutExercise: { select: { exerciseId: true } } },
+  });
+  if (!existing) return { ok: false, error: "Serie no encontrada." };
+
+  const bestWeightEver = await getBestWeightEver(existing.workoutExercise.exerciseId, id);
+  const isPr = isNewPr(setType, weightKg, bestWeightEver);
+  await prisma.setEntry.updateMany({ where: { id, userId }, data: { weightKg, reps, setType, isPr } });
+  return { ok: true, isPr };
 }
 
 export async function deleteSet(id: string) {
@@ -276,8 +309,8 @@ export async function deleteSet(id: string) {
   await prisma.setEntry.deleteMany({ where: { id, userId } });
 }
 
-// The most recent completed sets logged for this exercise, from any session
-// other than the one currently in progress — "última vez: X kg × Y".
+// Las series completadas más recientes registradas para este ejercicio, de
+// cualquier sesión que no sea la que está en curso ahora — "última vez: X kg × Y".
 export async function getLastPerformance(exerciseId: string, excludeSessionId?: string) {
   const userId = await requireUserId();
   const lastEntry = await prisma.workoutExercise.findFirst({
@@ -294,7 +327,7 @@ export async function getLastPerformance(exerciseId: string, excludeSessionId?: 
   return { date: lastEntry.workoutSession.startedAt, sets: lastEntry.sets };
 }
 
-// ---- History ----
+// ---- Historial ----
 
 export async function listExerciseHistory(exerciseId: string, limit = 20) {
   const userId = await requireUserId();
@@ -306,9 +339,9 @@ export async function listExerciseHistory(exerciseId: string, limit = 20) {
   });
 }
 
-// Deletes one past entry (an exercise logged within a finished session, with
-// its sets) — e.g. test data. Recomputes PRs/records automatically since
-// those are derived from this table, not stored separately.
+// Borra un registro pasado (un ejercicio registrado dentro de una sesión
+// terminada, con sus series) — ej. datos de prueba. Los PR/récords se
+// recalculan automáticamente, ya que se derivan de esta tabla y no se guardan aparte.
 export async function deleteHistoryEntry(workoutExerciseId: string) {
   const userId = await requireUserId();
   await prisma.workoutExercise.deleteMany({
@@ -316,7 +349,7 @@ export async function deleteHistoryEntry(workoutExerciseId: string) {
   });
 }
 
-// ---- PRs ----
+// ---- Récords personales ----
 
 export type ExercisePRs = {
   exerciseId: string;
@@ -328,7 +361,7 @@ export type ExercisePRs = {
 };
 
 function estimateOneRm(weightKg: number, reps: number): number | null {
-  if (reps > 15) return null; // Epley gets unreliable past this — don't pretend otherwise
+  if (reps > 15) return null; // A partir de aquí la fórmula de Epley deja de ser fiable — mejor no fingir que no
   return weightKg * (1 + reps / 30);
 }
 
@@ -375,7 +408,7 @@ export async function computeExercisePRs(exerciseId: string): Promise<ExercisePR
   return { exerciseId, exerciseName: exercise.name, bestWeight, bestReps, bestVolume, bestEstimatedOneRm };
 }
 
-// All PRs across every exercise the user has ever logged — for the Récords page.
+// Todos los PR de cada ejercicio que el usuario haya registrado alguna vez — para la página de Récords.
 export async function listAllPRs(): Promise<ExercisePRs[]> {
   const userId = await requireUserId();
   const exerciseIds = await prisma.workoutExercise.findMany({
@@ -390,7 +423,7 @@ export async function listAllPRs(): Promise<ExercisePRs[]> {
     .sort((a, b) => a.exerciseName.localeCompare(b.exerciseName));
 }
 
-// ---- Suggestions (conservative, observational, never prescriptive) ----
+// ---- Sugerencias (conservadoras, observacionales, nunca prescriptivas) ----
 
 export type Suggestion = { kind: "improved_reps" | "improved_weight" | "plateau" | "pr"; text: string };
 
