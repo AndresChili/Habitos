@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal";
 import { getSettings } from "@/lib/settings";
+import { getBreakRanges, isDateInBreak, type BreakRange } from "@/lib/breaks";
 import { dayKey, isoWeekday, monthRange, nowInTz, parseDayKey, weekRange } from "@/lib/dates";
 import {
   addDays,
@@ -145,6 +146,13 @@ export function isCurrentlyPaused(pauses: HabitPause[]): boolean {
   return pauses.some((p) => p.toDate === null);
 }
 
+// Una pausa propia del hábito o una pausa global de cuenta (vacaciones,
+// enfermedad) cuentan igual aquí: ambas congelan el hábito ese día — no
+// vence, no cuenta como fallado, y la racha no se rompe.
+function isExcludedOn(pauses: HabitPause[], breaks: BreakRange[], date: string): boolean {
+  return isPausedOn(pauses, date) || isDateInBreak(breaks, date);
+}
+
 export async function toggleLog(habitId: string, date: string) {
   const userId = await requireUserId();
   const habit = await prisma.habit.findFirst({ where: { id: habitId, userId } });
@@ -162,6 +170,7 @@ export async function toggleLog(habitId: string, date: string) {
 function computeFixedStreak(
   habit: Habit,
   pauses: HabitPause[],
+  breaks: BreakRange[],
   loggedDates: Set<string>,
   uptoDateKey: string
 ): number {
@@ -172,7 +181,7 @@ function computeFixedStreak(
   for (let i = 0; i < 3650; i++) {
     const key = dayKey(cursor);
     if (key < habitStart) break;
-    if (isPausedOn(pauses, key)) {
+    if (isExcludedOn(pauses, breaks, key)) {
       cursor = subDays(cursor, 1);
       continue;
     }
@@ -201,19 +210,22 @@ export type TodayHabit = {
 export async function getFixedHabitsForDate(dateKeyValue: string): Promise<TodayHabit[]> {
   const userId = await requireUserId();
   const weekday = isoWeekday(parseDayKey(dateKeyValue));
-  const habits = await prisma.habit.findMany({
-    where: {
-      userId,
-      recurrenceType: "FIXED_DAYS",
-      archivedAt: null,
-      createdAt: { lte: addDays(parseDayKey(dateKeyValue), 1) },
-      weekdays: { has: weekday },
-    },
-    include: { pauses: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const [habits, breaks] = await Promise.all([
+    prisma.habit.findMany({
+      where: {
+        userId,
+        recurrenceType: "FIXED_DAYS",
+        archivedAt: null,
+        createdAt: { lte: addDays(parseDayKey(dateKeyValue), 1) },
+        weekdays: { has: weekday },
+      },
+      include: { pauses: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    getBreakRanges(),
+  ]);
 
-  const due = habits.filter((h) => !isPausedOn(h.pauses, dateKeyValue));
+  const due = habits.filter((h) => !isExcludedOn(h.pauses, breaks, dateKeyValue));
   if (due.length === 0) return [];
 
   const logs = await prisma.habitLog.findMany({
@@ -233,7 +245,7 @@ export async function getFixedHabitsForDate(dateKeyValue: string): Promise<Today
       id: h.id,
       name: h.name,
       done: dates.has(dateKeyValue),
-      streak: computeFixedStreak(h, h.pauses, dates, dateKeyValue),
+      streak: computeFixedStreak(h, h.pauses, breaks, dates, dateKeyValue),
     };
   });
 }
@@ -252,11 +264,14 @@ export type QuotaHabit = {
 export async function getQuotaHabits(tz: string): Promise<QuotaHabit[]> {
   const userId = await requireUserId();
   const now = nowInTz(tz);
-  const habits = await prisma.habit.findMany({
-    where: { userId, recurrenceType: "QUOTA", archivedAt: null },
-    include: { pauses: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const [habits, breaks] = await Promise.all([
+    prisma.habit.findMany({
+      where: { userId, recurrenceType: "QUOTA", archivedAt: null },
+      include: { pauses: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    getBreakRanges(),
+  ]);
   if (habits.length === 0) return [];
 
   const logs = await prisma.habitLog.findMany({
@@ -281,7 +296,7 @@ export async function getQuotaHabits(tz: string): Promise<QuotaHabit[]> {
       quotaTarget: h.quotaTarget!,
       done,
       periodLabel: h.quotaPeriod === "WEEK" ? "esta semana" : "este mes",
-      paused: isCurrentlyPaused(h.pauses),
+      paused: isCurrentlyPaused(h.pauses) || isDateInBreak(breaks, dayKey(now)),
     };
   });
 }
@@ -350,7 +365,10 @@ const COMPARE_WINDOW_DAYS = 42;
 
 export async function getHabitDetail(id: string, tz: string): Promise<HabitDetail | null> {
   const userId = await requireUserId();
-  const habit = await prisma.habit.findFirst({ where: { id, userId }, include: { pauses: true } });
+  const [habit, breaks] = await Promise.all([
+    prisma.habit.findFirst({ where: { id, userId }, include: { pauses: true } }),
+    getBreakRanges(),
+  ]);
   if (!habit) return null;
 
   const now = nowInTz(tz);
@@ -365,7 +383,7 @@ export async function getHabitDetail(id: string, tz: string): Promise<HabitDetai
     for (let cursor = gridStart; dayKey(cursor) <= todayK; cursor = addDays(cursor, 1)) {
       const key = dayKey(cursor);
       let state: HeatCell["state"];
-      if (key < habitStartKey || isPausedOn(habit.pauses, key) || !habit.weekdays.includes(isoWeekday(cursor))) {
+      if (key < habitStartKey || isExcludedOn(habit.pauses, breaks, key) || !habit.weekdays.includes(isoWeekday(cursor))) {
         state = "not_scheduled";
       } else if (key === todayK && !loggedDates.has(key)) {
         state = "today_pending";
@@ -385,7 +403,7 @@ export async function getHabitDetail(id: string, tz: string): Promise<HabitDetai
         if (
           key >= habitStartKey &&
           key <= todayK &&
-          !isPausedOn(habit.pauses, key) &&
+          !isExcludedOn(habit.pauses, breaks, key) &&
           habit.weekdays.includes(isoWeekday(cursor))
         ) {
           scheduled++;
@@ -405,7 +423,7 @@ export async function getHabitDetail(id: string, tz: string): Promise<HabitDetai
       name: habit.name,
       weekdays: habit.weekdays,
       cells,
-      currentStreak: computeFixedStreak(habit, habit.pauses, loggedDates, todayK),
+      currentStreak: computeFixedStreak(habit, habit.pauses, breaks, loggedDates, todayK),
       completionRate: rateOver(currentStart, now),
       previousCompletionRate: rateOver(prevStart, prevEnd),
       doneCount: loggedDates.size,

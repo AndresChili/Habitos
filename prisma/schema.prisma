@@ -17,6 +17,12 @@ enum QuotaPeriod {
   MONTH
 }
 
+enum BreakReason {
+  VACATION
+  SICK
+  OTHER
+}
+
 // Una cuenta por persona. Todo lo demás cuelga de userId para que cualquier
 // consulta pueda limitarse a "solo lo que pertenece a este usuario" — ver src/lib/dal.ts.
 model User {
@@ -28,6 +34,7 @@ model User {
   habits     Habit[]
   habitLogs  HabitLog[]
   pauses     HabitPause[]
+  breaks     Break[]
   tasks      Task[]
   weightLogs WeightLog[]
   settings   Settings?
@@ -90,6 +97,23 @@ model HabitPause {
 
   @@index([habitId])
   @@index([userId])
+}
+
+// Pausa global de cuenta (vacaciones, enfermedad, etc.) — a diferencia de
+// HabitPause, no cuelga de un hábito concreto: cubre hábitos y gimnasio a la
+// vez durante el rango de fechas. toDate null = todavía en curso (no se sabe
+// cuándo termina, ej. un "estoy malo" que empieza hoy).
+model Break {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fromDate  String
+  toDate    String?
+  reason    BreakReason @default(OTHER)
+  note      String?
+  createdAt DateTime    @default(now())
+
+  @@index([userId, fromDate])
 }
 
 // date es "YYYY-MM-DD" en la zona horaria de la app — evita errores de DST/

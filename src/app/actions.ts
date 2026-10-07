@@ -29,7 +29,9 @@ import {
 } from "@/lib/habits";
 import { createTask, deleteTask, toggleTask, updateTask } from "@/lib/tasks";
 import { setWeight } from "@/lib/weight";
+import { createBreak, deleteBreak } from "@/lib/breaks";
 import { dayKey, nowInTz } from "@/lib/dates";
+import type { BreakReason } from "@/generated/prisma/client";
 
 export async function loginAction(formData: FormData) {
   const email = normalizeEmail(String(formData.get("email") ?? ""));
@@ -195,6 +197,29 @@ export async function toggleTaskAction(id: string) {
 export async function deleteTaskAction(id: string) {
   await deleteTask(id);
   revalidatePath("/");
+}
+
+// ---- Pausas de cuenta (vacaciones, enfermedad) ----
+
+export async function createBreakAction(formData: FormData) {
+  const fromDate = String(formData.get("fromDate") ?? "");
+  const toDateRaw = String(formData.get("toDate") ?? "").trim();
+  const reason = String(formData.get("reason") ?? "OTHER") as BreakReason;
+  const note = String(formData.get("note") ?? "");
+
+  const result = await createBreak(fromDate, toDateRaw || null, reason, note);
+  revalidatePath("/cuenta");
+  revalidatePath("/");
+  revalidatePath("/habitos");
+  if (!result.ok) redirect(`/cuenta?breakError=${encodeURIComponent(result.error)}`);
+  redirect("/cuenta");
+}
+
+export async function deleteBreakAction(id: string) {
+  await deleteBreak(id);
+  revalidatePath("/cuenta");
+  revalidatePath("/");
+  revalidatePath("/habitos");
 }
 
 // ---- Peso ----

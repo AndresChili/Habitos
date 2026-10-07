@@ -4,6 +4,7 @@ import { listTasksForDate } from "@/lib/tasks";
 import { getLatestWeightBefore, getWeightForDate } from "@/lib/weight";
 import { getTodayGymStatus } from "@/lib/workouts";
 import { listRoutines } from "@/lib/routines";
+import { getBreakOnDate } from "@/lib/breaks";
 import { dayKey, isoWeekday, nowInTz } from "@/lib/dates";
 import { WEEKDAY_NAMES } from "@/lib/gymLabels";
 import HabitToggle from "@/components/HabitToggle";
@@ -14,6 +15,7 @@ import WeightChip from "@/components/WeightChip";
 import { WeightVisibilityProvider } from "@/components/WeightVisibility";
 import DateNav from "@/components/DateNav";
 import GymTodayCard from "@/components/GymTodayCard";
+import BreakBanner from "@/components/BreakBanner";
 import { IconClock, IconGym } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -28,11 +30,12 @@ export default async function TodayPage({
   const todayKey = dayKey(nowInTz(tz));
   const date = params.date ?? todayKey;
 
-  const [habits, tasks, weight, gymStatus] = await Promise.all([
+  const [habits, tasks, weight, gymStatus, viewedBreak] = await Promise.all([
     getFixedHabitsForDate(date),
     listTasksForDate(date),
     date === todayKey ? getWeightForDate(date) : Promise.resolve(null),
     date === todayKey ? getTodayGymStatus() : Promise.resolve(null),
+    getBreakOnDate(date),
   ]);
 
   const previousWeight = date === todayKey ? await getLatestWeightBefore(date) : null;
@@ -54,6 +57,8 @@ export default async function TodayPage({
     <WeightVisibilityProvider>
     <div className="space-y-8">
       <DateNav date={date} todayKey={todayKey} habitsDone={habitsDone} habitsTotal={habits.length} />
+
+      {viewedBreak && <BreakBanner brk={viewedBreak} />}
 
       {date === todayKey && (gymStatus?.scheduled || weight !== null || tasks.length > 0) && (
         <div className="flex gap-2.5">
