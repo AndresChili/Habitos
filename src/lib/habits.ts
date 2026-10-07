@@ -182,6 +182,10 @@ function computeFixedStreak(
     const key = dayKey(cursor);
     if (key < habitStart) break;
     if (isExcludedOn(pauses, breaks, key)) {
+      // Un día de pausa no rompe la racha, pero si de verdad se hizo (ej.
+      // "hoy sí me dio tiempo de ir al gimnasio" durante vacaciones) sigue
+      // contando a favor — solo es neutro cuando se deja sin marcar.
+      if (loggedDates.has(key)) streak++;
       cursor = subDays(cursor, 1);
       continue;
     }
@@ -204,6 +208,9 @@ export type TodayHabit = {
   name: string;
   done: boolean;
   streak: number;
+  // En pausa (vacaciones/enfermedad) hoy — se puede marcar igual si de
+  // verdad se hizo, pero dejarlo sin marcar no rompe la racha.
+  excused: boolean;
 };
 
 // Hábitos FIXED_DAYS que vencen en `dateKeyValue`, para la pantalla "Hoy".
@@ -225,8 +232,11 @@ export async function getFixedHabitsForDate(dateKeyValue: string): Promise<Today
     getBreakRanges(),
   ]);
 
-  const due = habits.filter((h) => !isExcludedOn(h.pauses, breaks, dateKeyValue));
+  // Una pausa global no oculta el hábito — sigue pudiendo marcarse si de
+  // verdad se hizo. Solo una pausa propia del hábito lo saca de la lista.
+  const due = habits.filter((h) => !isPausedOn(h.pauses, dateKeyValue));
   if (due.length === 0) return [];
+  const excusedToday = isDateInBreak(breaks, dateKeyValue);
 
   const logs = await prisma.habitLog.findMany({
     where: { userId, habitId: { in: due.map((h) => h.id) }, date: { lte: dateKeyValue } },
@@ -246,6 +256,7 @@ export async function getFixedHabitsForDate(dateKeyValue: string): Promise<Today
       name: h.name,
       done: dates.has(dateKeyValue),
       streak: computeFixedStreak(h, h.pauses, breaks, dates, dateKeyValue),
+      excused: excusedToday,
     };
   });
 }
@@ -264,14 +275,11 @@ export type QuotaHabit = {
 export async function getQuotaHabits(tz: string): Promise<QuotaHabit[]> {
   const userId = await requireUserId();
   const now = nowInTz(tz);
-  const [habits, breaks] = await Promise.all([
-    prisma.habit.findMany({
-      where: { userId, recurrenceType: "QUOTA", archivedAt: null },
-      include: { pauses: true },
-      orderBy: { createdAt: "asc" },
-    }),
-    getBreakRanges(),
-  ]);
+  const habits = await prisma.habit.findMany({
+    where: { userId, recurrenceType: "QUOTA", archivedAt: null },
+    include: { pauses: true },
+    orderBy: { createdAt: "asc" },
+  });
   if (habits.length === 0) return [];
 
   const logs = await prisma.habitLog.findMany({
@@ -296,7 +304,7 @@ export async function getQuotaHabits(tz: string): Promise<QuotaHabit[]> {
       quotaTarget: h.quotaTarget!,
       done,
       periodLabel: h.quotaPeriod === "WEEK" ? "esta semana" : "este mes",
-      paused: isCurrentlyPaused(h.pauses) || isDateInBreak(breaks, dayKey(now)),
+      paused: isCurrentlyPaused(h.pauses),
     };
   });
 }
@@ -382,13 +390,16 @@ export async function getHabitDetail(id: string, tz: string): Promise<HabitDetai
     const cells: HeatCell[] = [];
     for (let cursor = gridStart; dayKey(cursor) <= todayK; cursor = addDays(cursor, 1)) {
       const key = dayKey(cursor);
+      // El marcado manda sobre la pausa — si de verdad se hizo ese día (ej.
+      // fue al gimnasio aunque estuviera "de vacaciones"), se ve como hecho,
+      // no como "no programado".
       let state: HeatCell["state"];
-      if (key < habitStartKey || isExcludedOn(habit.pauses, breaks, key) || !habit.weekdays.includes(isoWeekday(cursor))) {
-        state = "not_scheduled";
-      } else if (key === todayK && !loggedDates.has(key)) {
-        state = "today_pending";
-      } else if (loggedDates.has(key)) {
+      if (loggedDates.has(key)) {
         state = "done";
+      } else if (key < habitStartKey || isExcludedOn(habit.pauses, breaks, key) || !habit.weekdays.includes(isoWeekday(cursor))) {
+        state = "not_scheduled";
+      } else if (key === todayK) {
+        state = "today_pending";
       } else {
         state = "missed";
       }

@@ -111,7 +111,7 @@ export default async function TodayPage({
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card divide-y divide-border">
             {habits.map((h) => (
-              <HabitToggle key={h.id} habitId={h.id} date={date} name={h.name} done={h.done} streak={h.streak} />
+              <HabitToggle key={h.id} habitId={h.id} date={date} name={h.name} done={h.done} streak={h.streak} excused={h.excused} />
             ))}
           </div>
         )}

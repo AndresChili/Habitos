@@ -2,7 +2,6 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal";
 import { getSettings } from "@/lib/settings";
-import { getBreakRanges, isDateInBreak } from "@/lib/breaks";
 import { getRoutineForWeekday } from "@/lib/routines";
 import { dayKey, isoWeekday, nowInTz } from "@/lib/dates";
 import type { SetType } from "@/generated/prisma/client";
@@ -75,10 +74,7 @@ export async function getTodayGymStatus(): Promise<TodayGymStatus> {
   const settings = await getSettings();
   const today = nowInTz(settings.timezone);
   const todayWeekday = isoWeekday(today);
-  const breaks = await getBreakRanges();
-  // Un día de descanso de cuenta (vacaciones, enfermedad) anula el día de
-  // gimnasio asignado, igual que si ese día de la semana no tuviera rutina.
-  const isScheduledDay = settings.gymWeekdays.includes(todayWeekday) && !isDateInBreak(breaks, dayKey(today));
+  const isScheduledDay = settings.gymWeekdays.includes(todayWeekday);
 
   const userId = await requireUserId();
   const [routine, session] = await Promise.all([

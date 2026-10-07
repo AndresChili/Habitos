@@ -10,12 +10,14 @@ export default function HabitToggle({
   name,
   done,
   streak,
+  excused = false,
 }: {
   habitId: string;
   date: string;
   name: string;
   done: boolean;
   streak: number;
+  excused?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -36,6 +38,11 @@ export default function HabitToggle({
         {done && <IconCheck />}
       </span>
       <span className={`min-w-0 flex-1 truncate font-medium ${done ? "" : "text-text-muted"}`}>{name}</span>
+      {excused && !done && (
+        <span className="shrink-0 rounded-full bg-surface-muted px-2 py-1 text-[10px] font-medium text-text-faint">
+          no cuenta
+        </span>
+      )}
       {streak > 0 && (
         <span className="flex shrink-0 items-center gap-1 rounded-full bg-warn-soft px-2.5 py-1 text-xs font-bold text-warn">
           <IconFlame className="h-3 w-3" />
