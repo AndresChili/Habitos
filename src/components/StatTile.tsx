@@ -1,6 +1,7 @@
 const GRADIENTS = {
   teal: "from-accent to-accent-2",
   violet: "from-violet to-violet-2",
+  gold: "from-gold to-gold-2",
 } as const;
 
 export default function StatTile({

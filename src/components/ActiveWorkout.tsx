@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import { finishWorkoutAction } from "@/app/gym-actions";
 import RestTimer from "@/components/RestTimer";
 import WorkoutExerciseCard from "@/components/WorkoutExerciseCard";
@@ -17,7 +16,7 @@ export type ActiveExercise = {
   targetRepMax: number | null;
   lastPerformance: { sets: { weightKg: number; reps: number; setType: SetType }[] } | null;
   initialSets: { id: string; weightKg: number; reps: number; setType: SetType; isPr: boolean }[];
-  bestWeightEver: number | null;
+  prHistory: { weightKg: number; reps: number }[];
   suggestion: { text: string } | null;
 };
 
@@ -26,13 +25,11 @@ export default function ActiveWorkout({
   routineName,
   exercises,
   availableExercises,
-  completed = false,
 }: {
   sessionId: string;
   routineName: string;
   exercises: ActiveExercise[];
   availableExercises: { id: string; name: string; primaryMuscle: MuscleGroup }[];
-  completed?: boolean;
 }) {
   const [resetSignal, setResetSignal] = useState(0);
   const [pending, startTransition] = useTransition();
@@ -46,11 +43,11 @@ export default function ActiveWorkout({
   return (
     <div className="space-y-4">
       <header className="space-y-1">
-        <p className="text-xs font-medium text-text-faint">{completed ? "Entrenamiento completado" : "Entrenando"}</p>
+        <p className="text-xs font-medium text-text-faint">Entrenando</p>
         <h1 className="text-xl font-semibold tracking-tight text-text">{routineName}</h1>
       </header>
 
-      {!completed && <RestTimer sessionId={sessionId} resetSignal={resetSignal} />}
+      <RestTimer sessionId={sessionId} resetSignal={resetSignal} />
 
       <div className="space-y-3">
         {exercises.map((ex) => (
@@ -65,36 +62,26 @@ export default function ActiveWorkout({
             targetRepMax={ex.targetRepMax}
             lastPerformance={ex.lastPerformance}
             initialSets={ex.initialSets}
-            bestWeightEver={ex.bestWeightEver}
+            prHistory={ex.prHistory}
             suggestion={ex.suggestion}
             onSetLogged={() => setResetSignal((n) => n + 1)}
             open={openId === ex.workoutExerciseId}
             onOpen={() => setOpenId(ex.workoutExerciseId)}
             onSaved={() => setOpenId(null)}
-            readOnly={completed}
           />
         ))}
       </div>
 
-      {!completed && <AddExerciseToSession sessionId={sessionId} exercises={availableExercises} />}
+      <AddExerciseToSession sessionId={sessionId} exercises={availableExercises} />
 
-      {completed ? (
-        <Link
-          href="/gimnasio/calendario"
-          className="block w-full rounded-2xl border border-border py-3.5 text-center text-sm font-semibold text-text-muted transition-all active:scale-[0.98]"
-        >
-          Volver al calendario
-        </Link>
-      ) : (
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => startTransition(() => finishWorkoutAction(sessionId))}
-          className="w-full rounded-2xl bg-gradient-to-br from-violet to-violet-2 py-3.5 text-sm font-semibold text-violet-on shadow-glow-violet transition-all active:scale-[0.98] disabled:opacity-50"
-        >
-          Finalizar entrenamiento
-        </button>
-      )}
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => startTransition(() => finishWorkoutAction(sessionId))}
+        className="w-full rounded-2xl bg-gradient-to-br from-violet to-violet-2 py-3.5 text-sm font-semibold text-violet-on shadow-glow-violet transition-all active:scale-[0.98] disabled:opacity-50"
+      >
+        Finalizar entrenamiento
+      </button>
     </div>
   );
 }

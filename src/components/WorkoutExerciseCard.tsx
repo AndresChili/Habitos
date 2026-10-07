@@ -17,8 +17,11 @@ const SET_TYPES: SetType[] = ["WARMUP", "NORMAL", "TOP_SET", "BACK_OFF"];
 
 type SetRow = { id: string; weightKg: number; reps: number; setType: SetType; isPr: boolean };
 
-function isNewPr(setType: SetType, weightKg: number, bestWeightEver: number | null): boolean {
-  return setType !== "WARMUP" && (bestWeightEver === null || weightKg > bestWeightEver);
+type PrHistoryEntry = { weightKg: number; reps: number };
+
+function isNewPr(setType: SetType, weightKg: number, reps: number, history: PrHistoryEntry[]): boolean {
+  if (setType === "WARMUP") return false;
+  return !history.some((h) => h.weightKg >= weightKg && h.reps >= reps);
 }
 type HistoryEntry = {
   id: string;
@@ -190,13 +193,12 @@ export default function WorkoutExerciseCard({
   targetRepMax,
   lastPerformance,
   initialSets,
-  bestWeightEver,
+  prHistory: prHistoryProp,
   suggestion,
   onSetLogged,
   open,
   onOpen,
   onSaved,
-  readOnly = false,
 }: {
   workoutExerciseId: string;
   exerciseId: string;
@@ -207,13 +209,12 @@ export default function WorkoutExerciseCard({
   targetRepMax: number | null;
   lastPerformance: { sets: { weightKg: number; reps: number; setType: SetType }[] } | null;
   initialSets: SetRow[];
-  bestWeightEver: number | null;
+  prHistory: PrHistoryEntry[];
   suggestion: { text: string } | null;
   onSetLogged: () => void;
   open: boolean;
   onOpen: () => void;
   onSaved: () => void;
-  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [sets, setSets] = useState<SetRow[]>(initialSets);
@@ -222,11 +223,11 @@ export default function WorkoutExerciseCard({
   const originalRef = useRef<Map<string, SetRow>>(new Map(initialSets.map((s) => [s.id, s])));
   const tmpCounter = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Base de "mejor peso histórico" que se va actualizando, usada para marcar
-  // nuevos PR en el cliente al instante, antes incluso de guardar la serie —
-  // empieza con el historial completo calculado en el servidor, y sube según
-  // las series pendientes de guardar lo vayan superando.
-  const [prBaseline, setPrBaseline] = useState(bestWeightEver);
+  // Historial de series (peso, reps) contra el que se compara una serie nueva
+  // para marcar PR en el cliente al instante, antes incluso de guardar —
+  // empieza con el historial completo calculado en el servidor, y se amplía
+  // con cada serie pendiente de guardar que se vaya añadiendo.
+  const [prHistory, setPrHistory] = useState(prHistoryProp);
 
   // Trae esta tarjeta a la vista en cuanto pasa a ser la abierta — cubre
   // tanto tocar una tarjeta colapsada como tocar "Editar" en una ya guardada,
@@ -248,40 +249,6 @@ export default function WorkoutExerciseCard({
   const [setType, setSetType] = useState<SetType>("NORMAL");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-
-  if (readOnly) {
-    return (
-      <div className="space-y-2 rounded-2xl border border-border bg-surface p-4 shadow-card">
-        <div className="flex items-center gap-2">
-          <p className="font-medium text-text">{exerciseName}</p>
-          <span className="rounded-full bg-violet-soft px-2 py-0.5 text-[10px] font-medium text-violet-strong">
-            {MUSCLE_LABELS[primaryMuscle]}
-          </span>
-        </div>
-        {sets.length === 0 ? (
-          <p className="text-xs text-text-faint">Sin series registradas.</p>
-        ) : (
-          <div className="space-y-1.5">
-            {sets.map((s) => (
-              <div
-                key={s.id}
-                className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
-                  s.isPr ? "border border-gold/40 bg-gold-soft" : "bg-surface-muted"
-                }`}
-              >
-                <span className="flex items-center text-text">
-                  {s.isPr && <IconStar className="mr-1.5 h-3.5 w-3.5 shrink-0 text-gold-strong" />}
-                  <span className="font-medium">{s.weightKg}kg</span>&nbsp;× {s.reps}
-                  {s.isPr && <span className="ml-2 text-xs font-semibold text-gold-strong">PR</span>}
-                </span>
-                <span className="text-xs text-text-faint">{SET_TYPE_SHORT[s.setType]}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
 
   function removeFromSession() {
     const warning =
@@ -309,8 +276,8 @@ export default function WorkoutExerciseCard({
       return;
     }
     const id = `tmp-${tmpCounter.current++}`;
-    const isPr = isNewPr(setType, w, prBaseline);
-    if (isPr) setPrBaseline(w);
+    const isPr = isNewPr(setType, w, r, prHistory);
+    if (setType !== "WARMUP") setPrHistory((prev) => [...prev, { weightKg: w, reps: r }]);
     setSets((prev) => [...prev, { id, weightKg: w, reps: r, setType, isPr }]);
     setDirty(true);
     onSetLogged();
@@ -441,8 +408,10 @@ export default function WorkoutExerciseCard({
               set={s}
               onChanged={(updated) => {
                 if (updated) {
-                  const isPr = isNewPr(updated.setType, updated.weightKg, prBaseline);
-                  if (isPr) setPrBaseline(updated.weightKg);
+                  const isPr = isNewPr(updated.setType, updated.weightKg, updated.reps, prHistory);
+                  if (updated.setType !== "WARMUP") {
+                    setPrHistory((prev) => [...prev, { weightKg: updated!.weightKg, reps: updated!.reps }]);
+                  }
                   updated = { ...updated, isPr };
                 }
                 setSets((prev) => (updated ? prev.map((x) => (x.id === s.id ? updated : x)) : prev.filter((x) => x.id !== s.id)));

@@ -224,28 +224,32 @@ export async function listSessions(limit = 30) {
 
 // ---- Series ----
 
-// El peso más alto (sin contar calentamientos) registrado jamás para este
+// Todas las series (sin contar calentamientos) registradas jamás para este
 // ejercicio, en cualquier sesión (completada o todavía en curso) — la base
 // contra la que se compara una serie nueva para decidir si es PR.
 // `excludeSetId` permite que una serie en edición se compare contra todo lo
 // demás, no contra su propio valor desactualizado.
-export async function getBestWeightEver(exerciseId: string, excludeSetId?: string): Promise<number | null> {
+export async function getPrHistory(exerciseId: string, excludeSetId?: string): Promise<PrHistoryEntry[]> {
   const userId = await requireUserId();
-  const best = await prisma.setEntry.findFirst({
+  return prisma.setEntry.findMany({
     where: {
       userId,
       setType: { not: "WARMUP" },
       workoutExercise: { exerciseId },
       ...(excludeSetId ? { id: { not: excludeSetId } } : {}),
     },
-    orderBy: { weightKg: "desc" },
-    select: { weightKg: true },
+    select: { weightKg: true, reps: true },
   });
-  return best?.weightKg ?? null;
 }
 
-function isNewPr(setType: SetType, weightKg: number, bestWeightEver: number | null): boolean {
-  return setType !== "WARMUP" && (bestWeightEver === null || weightKg > bestWeightEver);
+export type PrHistoryEntry = { weightKg: number; reps: number };
+
+// Una serie es PR si ninguna serie anterior iguala o supera tanto su peso
+// como sus repeticiones a la vez — así 70kg×9 es PR aunque el peso máximo
+// histórico sea 80kg, porque nadie hizo antes 70kg con 9 o más repeticiones.
+function isNewPr(setType: SetType, weightKg: number, reps: number, history: PrHistoryEntry[]): boolean {
+  if (setType === "WARMUP") return false;
+  return !history.some((h) => h.weightKg >= weightKg && h.reps >= reps);
 }
 
 export async function addSet(
@@ -267,11 +271,11 @@ export async function addSet(
   });
   if (!workoutExercise) return { ok: false, error: "Ejercicio de sesión no encontrado." };
 
-  const [last, bestWeightEver] = await Promise.all([
+  const [last, history] = await Promise.all([
     prisma.setEntry.findFirst({ where: { workoutExerciseId }, orderBy: { order: "desc" } }),
-    getBestWeightEver(workoutExercise.exerciseId),
+    getPrHistory(workoutExercise.exerciseId),
   ]);
-  const isPr = isNewPr(setType, weightKg, bestWeightEver);
+  const isPr = isNewPr(setType, weightKg, reps, history);
   const set = await prisma.setEntry.create({
     data: { workoutExerciseId, userId, order: (last?.order ?? -1) + 1, weightKg, reps, setType, isPr },
   });
@@ -298,8 +302,8 @@ export async function updateSet(
   });
   if (!existing) return { ok: false, error: "Serie no encontrada." };
 
-  const bestWeightEver = await getBestWeightEver(existing.workoutExercise.exerciseId, id);
-  const isPr = isNewPr(setType, weightKg, bestWeightEver);
+  const history = await getPrHistory(existing.workoutExercise.exerciseId, id);
+  const isPr = isNewPr(setType, weightKg, reps, history);
   await prisma.setEntry.updateMany({ where: { id, userId }, data: { weightKg, reps, setType, isPr } });
   return { ok: true, isPr };
 }

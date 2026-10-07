@@ -1,15 +1,35 @@
 import { notFound } from "next/navigation";
-import { getSession, getLastPerformance, getSuggestion, getBestWeightEver } from "@/lib/workouts";
+import { getSession, getLastPerformance, getSuggestion, getPrHistory } from "@/lib/workouts";
 import { listExercises } from "@/lib/exercises";
 import { prisma } from "@/lib/db";
 import ActiveWorkout, { type ActiveExercise } from "@/components/ActiveWorkout";
+import WorkoutSummary from "@/components/WorkoutSummary";
 
 export const dynamic = "force-dynamic";
 
 export default async function EntrenarPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const { sessionId } = await params;
-  const [session, availableExercises] = await Promise.all([getSession(sessionId), listExercises()]);
+  const session = await getSession(sessionId);
   if (!session) notFound();
+
+  if (session.status === "COMPLETED") {
+    return (
+      <WorkoutSummary
+        routineName={session.routineName}
+        startedAt={session.startedAt}
+        finishedAt={session.finishedAt}
+        backHref="/gimnasio/calendario"
+        exercises={session.exercises.map((we) => ({
+          id: we.id,
+          exerciseName: we.exercise.name,
+          primaryMuscle: we.exercise.primaryMuscle,
+          sets: we.sets.map((s) => ({ id: s.id, weightKg: s.weightKg, reps: s.reps, setType: s.setType, isPr: s.isPr })),
+        }))}
+      />
+    );
+  }
+
+  const availableExercises = await listExercises();
 
   const repTargets = session.routineId
     ? await prisma.routineExercise.findMany({
@@ -21,10 +41,10 @@ export default async function EntrenarPage({ params }: { params: Promise<{ sessi
 
   const exercises: ActiveExercise[] = await Promise.all(
     session.exercises.map(async (we) => {
-      const [lastPerformance, suggestion, bestWeightEver] = await Promise.all([
+      const [lastPerformance, suggestion, prHistory] = await Promise.all([
         getLastPerformance(we.exerciseId, sessionId),
         we.sets.length > 0 ? getSuggestion(we.exerciseId, sessionId) : Promise.resolve(null),
-        getBestWeightEver(we.exerciseId),
+        getPrHistory(we.exerciseId),
       ]);
       const target = targetByExercise.get(we.exerciseId);
 
@@ -37,7 +57,7 @@ export default async function EntrenarPage({ params }: { params: Promise<{ sessi
         targetRepMax: target?.targetRepMax ?? null,
         lastPerformance: lastPerformance ? { sets: lastPerformance.sets } : null,
         initialSets: we.sets.map((s) => ({ id: s.id, weightKg: s.weightKg, reps: s.reps, setType: s.setType, isPr: s.isPr })),
-        bestWeightEver,
+        prHistory,
         suggestion,
       };
     })
@@ -49,7 +69,6 @@ export default async function EntrenarPage({ params }: { params: Promise<{ sessi
       routineName={session.routineName}
       exercises={exercises}
       availableExercises={availableExercises.map((e) => ({ id: e.id, name: e.name, primaryMuscle: e.primaryMuscle }))}
-      completed={session.status === "COMPLETED"}
     />
   );
 }
