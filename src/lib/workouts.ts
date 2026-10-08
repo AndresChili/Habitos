@@ -244,12 +244,29 @@ export async function getPrHistory(exerciseId: string, excludeSetId?: string): P
 
 export type PrHistoryEntry = { weightKg: number; reps: number };
 
-// Una serie es PR si ninguna serie anterior iguala o supera tanto su peso
-// como sus repeticiones a la vez — así 70kg×9 es PR aunque el peso máximo
-// histórico sea 80kg, porque nadie hizo antes 70kg con 9 o más repeticiones.
+// El PR es siempre el peso máximo levantado — nunca una serie con menos
+// peso que el máximo histórico, por muchas repeticiones que haga. Solo hay
+// una excepción: igualar el peso máximo actual con más repeticiones que
+// las que se hicieron la vez que se levantó ese mismo peso máximo también
+// cuenta como PR (progresar en reps sin perder el récord de peso).
 function isNewPr(setType: SetType, weightKg: number, reps: number, history: PrHistoryEntry[]): boolean {
   if (setType === "WARMUP") return false;
-  return !history.some((h) => h.weightKg >= weightKg && h.reps >= reps);
+  if (history.length === 0) return true;
+  const bestWeight = Math.max(...history.map((h) => h.weightKg));
+  if (weightKg > bestWeight) return true;
+  if (weightKg < bestWeight) return false;
+  const bestRepsAtMaxWeight = Math.max(...history.filter((h) => h.weightKg === bestWeight).map((h) => h.reps));
+  return reps > bestRepsAtMaxWeight;
+}
+
+// Solo puede haber un PR vigente a la vez por ejercicio — en cuanto una
+// serie nueva lo supera, la estrella se quita de cualquier otra serie de
+// ese ejercicio que la tuviera (de esta sesión o de cualquier anterior).
+async function clearOtherPrFlags(userId: string, exerciseId: string, exceptSetId: string) {
+  await prisma.setEntry.updateMany({
+    where: { userId, isPr: true, id: { not: exceptSetId }, workoutExercise: { exerciseId } },
+    data: { isPr: false },
+  });
 }
 
 export async function addSet(
@@ -279,6 +296,7 @@ export async function addSet(
   const set = await prisma.setEntry.create({
     data: { workoutExerciseId, userId, order: (last?.order ?? -1) + 1, weightKg, reps, setType, isPr },
   });
+  if (isPr) await clearOtherPrFlags(userId, workoutExercise.exerciseId, set.id);
   return { ok: true, id: set.id, isPr };
 }
 
@@ -305,6 +323,7 @@ export async function updateSet(
   const history = await getPrHistory(existing.workoutExercise.exerciseId, id);
   const isPr = isNewPr(setType, weightKg, reps, history);
   await prisma.setEntry.updateMany({ where: { id, userId }, data: { weightKg, reps, setType, isPr } });
+  if (isPr) await clearOtherPrFlags(userId, existing.workoutExercise.exerciseId, id);
   return { ok: true, isPr };
 }
 
