@@ -2,22 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { IconMoon, IconSun, IconSystem } from "@/components/icons";
-
-type Theme = "light" | "dark" | "system";
+import { applyTheme, getStoredTheme, type Theme } from "@/lib/theme";
 
 const OPTIONS: { value: Theme; label: string; icon: typeof IconSun }[] = [
   { value: "light", label: "Claro", icon: IconSun },
   { value: "dark", label: "Oscuro", icon: IconMoon },
   { value: "system", label: "Sistema", icon: IconSystem },
 ];
-
-function applyTheme(theme: Theme) {
-  if (theme === "system") {
-    document.documentElement.removeAttribute("data-theme");
-  } else {
-    document.documentElement.setAttribute("data-theme", theme);
-  }
-}
 
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("system");
@@ -27,10 +18,13 @@ export default function ThemeToggle() {
   // inline en layout.tsx ya aplica el tema real antes de pintar, esto solo
   // sincroniza qué botón del selector aparece activo, y tiene que seguir
   // siendo un efecto para evitar un desajuste de hidratación cliente/servidor.
+  // También reaplica el atributo (como <ThemeSync />) por si esta tarjeta se
+  // monta después de que algo haya dejado la página en un tema distinto al guardado.
   useEffect(() => {
-    const stored = localStorage.getItem("theme");
+    const stored = getStoredTheme();
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTheme(stored === "light" || stored === "dark" ? stored : "system");
+    setTheme(stored);
+    applyTheme(stored);
   }, []);
 
   function select(value: Theme) {
