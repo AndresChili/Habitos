@@ -17,12 +17,6 @@ const SET_TYPES: SetType[] = ["WARMUP", "NORMAL", "TOP_SET", "BACK_OFF"];
 
 type SetRow = { id: string; weightKg: number; reps: number; setType: SetType; isPr: boolean };
 
-type PrHistoryEntry = { weightKg: number; reps: number };
-
-function isNewPr(setType: SetType, weightKg: number, reps: number, history: PrHistoryEntry[]): boolean {
-  if (setType === "WARMUP") return false;
-  return !history.some((h) => h.weightKg >= weightKg && h.reps >= reps);
-}
 type HistoryEntry = {
   id: string;
   date: Date;
@@ -51,15 +45,19 @@ function SetTypePicker({ value, onChange }: { value: SetType; onChange: (t: SetT
 
 function ExistingSetRow({
   set,
-  onChanged,
+  onSave,
+  onDelete,
 }: {
   set: SetRow;
-  onChanged: (updated: SetRow | null) => void;
+  onSave: (weightKg: number, reps: number, setType: SetType) => Promise<{ ok: boolean; error?: string }>;
+  onDelete: () => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [weight, setWeight] = useState(set.weightKg.toString());
   const [reps, setReps] = useState(set.reps.toString());
   const [setType, setSetType] = useState<SetType>(set.setType);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!editing) {
     return (
@@ -76,7 +74,15 @@ function ExistingSetRow({
           <span className="ml-2 text-xs text-text-faint">{SET_TYPE_SHORT[set.setType]}</span>
           {set.isPr && <span className="ml-2 text-xs font-semibold text-gold-strong">PR</span>}
         </button>
-        <button type="button" onClick={() => onChanged(null)} className="text-xs text-danger/70 hover:text-danger">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => {
+            setPending(true);
+            onDelete().finally(() => setPending(false));
+          }}
+          className="text-xs text-danger/70 hover:text-danger disabled:opacity-50"
+        >
           Quitar
         </button>
       </div>
@@ -102,19 +108,32 @@ function ExistingSetRow({
         <span className="text-xs text-text-faint">reps</span>
       </div>
       <SetTypePicker value={setType} onChange={setSetType} />
+      {error && <p className="text-xs text-danger">{error}</p>}
       <div className="flex gap-2">
-        <button type="button" onClick={() => setEditing(false)} className="flex-1 rounded-lg border border-border py-1.5 text-xs font-medium text-text-muted">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => setEditing(false)}
+          className="flex-1 rounded-lg border border-border py-1.5 text-xs font-medium text-text-muted disabled:opacity-50"
+        >
           Cancelar
         </button>
         <button
           type="button"
+          disabled={pending}
           onClick={() => {
-            onChanged({ id: set.id, weightKg: Number(weight.replace(",", ".")), reps: Number(reps), setType, isPr: set.isPr });
-            setEditing(false);
+            setError(null);
+            setPending(true);
+            onSave(Number(weight.replace(",", ".")), Number(reps), setType)
+              .then((result) => {
+                if (result.ok) setEditing(false);
+                else setError(result.error ?? "Error al guardar.");
+              })
+              .finally(() => setPending(false));
           }}
           className="flex-1 rounded-lg bg-gradient-to-br from-violet to-violet-2 py-1.5 text-xs font-semibold text-violet-on disabled:opacity-50"
         >
-          Listo
+          {pending ? "Guardando…" : "Listo"}
         </button>
       </div>
     </div>
@@ -193,7 +212,6 @@ export default function WorkoutExerciseCard({
   targetRepMax,
   lastPerformance,
   initialSets,
-  prHistory: prHistoryProp,
   suggestion,
   onSetLogged,
   open,
@@ -209,7 +227,6 @@ export default function WorkoutExerciseCard({
   targetRepMax: number | null;
   lastPerformance: { sets: { weightKg: number; reps: number; setType: SetType }[] } | null;
   initialSets: SetRow[];
-  prHistory: PrHistoryEntry[];
   suggestion: { text: string } | null;
   onSetLogged: () => void;
   open: boolean;
@@ -217,17 +234,11 @@ export default function WorkoutExerciseCard({
   onSaved: () => void;
 }) {
   const router = useRouter();
+  // Cada serie se guarda en la BD en cuanto se añade/edita/borra — nada
+  // queda solo en memoria, así salir de la app o recargar a mitad de
+  // ejercicio nunca pierde series ya registradas.
   const [sets, setSets] = useState<SetRow[]>(initialSets);
-  const [deletedIds, setDeletedIds] = useState<string[]>([]);
-  const [dirty, setDirty] = useState(false);
-  const originalRef = useRef<Map<string, SetRow>>(new Map(initialSets.map((s) => [s.id, s])));
-  const tmpCounter = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Historial de series (peso, reps) contra el que se compara una serie nueva
-  // para marcar PR en el cliente al instante, antes incluso de guardar —
-  // empieza con el historial completo calculado en el servidor, y se amplía
-  // con cada serie pendiente de guardar que se vaya añadiendo.
-  const [prHistory, setPrHistory] = useState(prHistoryProp);
 
   // Trae esta tarjeta a la vista en cuanto pasa a ser la abierta — cubre
   // tanto tocar una tarjeta colapsada como tocar "Editar" en una ya guardada,
@@ -275,53 +286,37 @@ export default function WorkoutExerciseCard({
       setError("Repeticiones inválidas.");
       return;
     }
-    const id = `tmp-${tmpCounter.current++}`;
-    const isPr = isNewPr(setType, w, r, prHistory);
-    if (setType !== "WARMUP") setPrHistory((prev) => [...prev, { weightKg: w, reps: r }]);
-    setSets((prev) => [...prev, { id, weightKg: w, reps: r, setType, isPr }]);
-    setDirty(true);
-    onSetLogged();
+    startTransition(async () => {
+      const result = await addSetAction(workoutExerciseId, sessionId, w, r, setType);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setSets((prev) => [
+        ...(result.isPr ? prev.map((x) => ({ ...x, isPr: false })) : prev),
+        { id: result.id, weightKg: w, reps: r, setType, isPr: result.isPr },
+      ]);
+      onSetLogged();
+    });
   }
 
-  // Guarda de una vez todas las altas/ediciones/bajas pendientes en local —
-  // nada llega a la base de datos hasta que esto se ejecuta, así que salir
-  // de la app a mitad de un ejercicio nunca guarda una serie a medias en silencio.
-  function handleSave() {
-    setError(null);
-    startTransition(async () => {
-      for (const id of deletedIds) {
-        await deleteSetAction(id, sessionId);
-      }
-      const nextSets: SetRow[] = [];
-      for (const s of sets) {
-        if (s.id.startsWith("tmp-")) {
-          const result = await addSetAction(workoutExerciseId, sessionId, s.weightKg, s.reps, s.setType);
-          if (!result.ok) {
-            setError(result.error);
-            return;
-          }
-          nextSets.push({ ...s, id: result.id, isPr: result.isPr });
-        } else {
-          const original = originalRef.current.get(s.id);
-          const changed = !original || original.weightKg !== s.weightKg || original.reps !== s.reps || original.setType !== s.setType;
-          if (changed) {
-            const result = await updateSetAction(s.id, sessionId, s.weightKg, s.reps, s.setType);
-            if (!result.ok) {
-              setError(result.error);
-              return;
-            }
-            nextSets.push({ ...s, isPr: result.isPr });
-          } else {
-            nextSets.push(s);
-          }
-        }
-      }
-      setSets(nextSets);
-      originalRef.current = new Map(nextSets.map((x) => [x.id, x]));
-      setDeletedIds([]);
-      setDirty(false);
-      onSaved();
-    });
+  async function handleUpdateSet(id: string, weightKg: number, reps: number, setType: SetType) {
+    if (!Number.isFinite(weightKg) || weightKg < 0 || weightKg > 500) return { ok: false, error: "Peso inválido." };
+    if (!Number.isInteger(reps) || reps < 1 || reps > 100) return { ok: false, error: "Repeticiones inválidas." };
+    const result = await updateSetAction(id, sessionId, weightKg, reps, setType);
+    if (!result.ok) return { ok: false, error: result.error };
+    setSets((prev) =>
+      prev.map((x) => {
+        if (x.id === id) return { id, weightKg, reps, setType, isPr: result.isPr };
+        return result.isPr ? { ...x, isPr: false } : x;
+      })
+    );
+    return { ok: true };
+  }
+
+  async function handleDeleteSet(id: string) {
+    await deleteSetAction(id, sessionId);
+    setSets((prev) => prev.filter((x) => x.id !== id));
   }
 
   if (!open) {
@@ -336,9 +331,7 @@ export default function WorkoutExerciseCard({
               <IconCheck className="h-3 w-3" />
             </span>
             <p className="truncate font-medium text-text">{exerciseName}</p>
-            <span className={`shrink-0 text-xs font-medium ${dirty ? "text-danger" : "text-accent-strong"}`}>
-              {dirty ? "Sin guardar" : "Guardado"}
-            </span>
+            <span className="shrink-0 text-xs font-medium text-accent-strong">Guardado</span>
           </div>
           <button
             type="button"
@@ -406,18 +399,8 @@ export default function WorkoutExerciseCard({
             <ExistingSetRow
               key={s.id}
               set={s}
-              onChanged={(updated) => {
-                if (updated) {
-                  const isPr = isNewPr(updated.setType, updated.weightKg, updated.reps, prHistory);
-                  if (updated.setType !== "WARMUP") {
-                    setPrHistory((prev) => [...prev, { weightKg: updated!.weightKg, reps: updated!.reps }]);
-                  }
-                  updated = { ...updated, isPr };
-                }
-                setSets((prev) => (updated ? prev.map((x) => (x.id === s.id ? updated : x)) : prev.filter((x) => x.id !== s.id)));
-                if (!updated && !s.id.startsWith("tmp-")) setDeletedIds((prev) => [...prev, s.id]);
-                setDirty(true);
-              }}
+              onSave={(weightKg, reps, setType) => handleUpdateSet(s.id, weightKg, reps, setType)}
+              onDelete={() => handleDeleteSet(s.id)}
             />
           ))}
         </div>
@@ -455,11 +438,10 @@ export default function WorkoutExerciseCard({
 
       <button
         type="button"
-        disabled={pending}
-        onClick={handleSave}
-        className="w-full rounded-xl bg-gradient-to-br from-accent to-accent-2 py-2.5 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
+        onClick={onSaved}
+        className="w-full rounded-xl bg-gradient-to-br from-accent to-accent-2 py-2.5 text-sm font-semibold text-accent-on shadow-glow transition-all active:scale-[0.98]"
       >
-        {pending ? "Guardando…" : "Guardar"}
+        Listo
       </button>
     </div>
   );

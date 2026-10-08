@@ -16,7 +16,6 @@ export type ActiveExercise = {
   targetRepMax: number | null;
   lastPerformance: { sets: { weightKg: number; reps: number; setType: SetType }[] } | null;
   initialSets: { id: string; weightKg: number; reps: number; setType: SetType; isPr: boolean }[];
-  prHistory: { weightKg: number; reps: number }[];
   suggestion: { text: string } | null;
 };
 
@@ -62,7 +61,6 @@ export default function ActiveWorkout({
             targetRepMax={ex.targetRepMax}
             lastPerformance={ex.lastPerformance}
             initialSets={ex.initialSets}
-            prHistory={ex.prHistory}
             suggestion={ex.suggestion}
             onSetLogged={() => setResetSignal((n) => n + 1)}
             open={openId === ex.workoutExerciseId}
