@@ -46,3 +46,7 @@ next-env.d.ts
 
 # prisma generated client
 /src/generated/prisma
+
+# archivos de agentes IA, regenerados localmente por herramientas de desarrollo
+AGENTS.md
+CLAUDE.md
