@@ -32,11 +32,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Comprobar tipos
-        run: npx tsc --noEmit
-
       - name: Tests
         run: npm test
 
+      # Incluye su propia comprobación de tipos sobre todo el proyecto — no
+      # hace falta un paso de "tsc --noEmit" aparte, y uno aparte fallaría
+      # porque los tipos de rutas de Next (LayoutProps, etc.) no existen
+      # hasta que el propio build los genera.
       - name: Build de producción
         run: npm run build
