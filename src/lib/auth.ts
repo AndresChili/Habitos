@@ -12,7 +12,7 @@ const BCRYPT_ROUNDS = 12;
 // exista o no el email, en vez de devolver antes y filtrar esa diferencia por tiempo.
 const DUMMY_HASH = "$2b$12$IIJ.qwoMLS8/rP3FRVqSUOLIq6Ph0B9Y/RutXaRv2.sskwuHuciKG";
 
-export type SessionPayload = { uid: string; exp: number };
+export type SessionPayload = { uid: string; exp: number; sv: number };
 
 function sign(payload: string): string {
   const secret = process.env.SESSION_SECRET;
@@ -27,8 +27,12 @@ function encodePayload(payload: SessionPayload): string {
 function decodePayload(encoded: string): SessionPayload | null {
   try {
     const parsed = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
-    if (typeof parsed?.uid === "string" && typeof parsed?.exp === "number") {
-      return { uid: parsed.uid, exp: parsed.exp };
+    if (
+      typeof parsed?.uid === "string" &&
+      typeof parsed?.exp === "number" &&
+      typeof parsed?.sv === "number"
+    ) {
+      return { uid: parsed.uid, exp: parsed.exp, sv: parsed.sv };
     }
     return null;
   } catch {
@@ -85,9 +89,9 @@ export function verifySessionToken(token: string | undefined | null): SessionPay
   return payload;
 }
 
-export async function createSession(userId: string) {
+export async function createSession(userId: string, sessionVersion: number) {
   const exp = Date.now() + MAX_AGE_SECONDS * 1000;
-  const encodedPayload = encodePayload({ uid: userId, exp });
+  const encodedPayload = encodePayload({ uid: userId, exp, sv: sessionVersion });
   const token = `${encodedPayload}.${sign(encodedPayload)}`;
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {

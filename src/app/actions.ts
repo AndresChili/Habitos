@@ -14,7 +14,7 @@ import {
   verifyPasswordOrDummy,
 } from "@/lib/auth";
 import { requireUserId } from "@/lib/dal";
-import { isRateLimited, recordLoginAttempt } from "@/lib/rateLimit";
+import { getClientIp, isRateLimited, recordLoginAttempt } from "@/lib/rateLimit";
 import {
   archiveHabit,
   createHabit,
@@ -51,7 +51,8 @@ export async function loginAction(formData: FormData) {
     redirect(`/login?error=1&${qs}`);
   }
 
-  if (await isRateLimited(email)) {
+  const ip = await getClientIp();
+  if (await isRateLimited(email, ip)) {
     redirect(`/login?error=rate&${qs}`);
   }
 
@@ -59,13 +60,13 @@ export async function loginAction(formData: FormData) {
   // Siempre ejecuta bcrypt, coincida o no, para que el tiempo de respuesta
   // no revele si el email está registrado.
   const valid = await verifyPasswordOrDummy(password, user?.passwordHash);
-  await recordLoginAttempt(email, valid);
+  await recordLoginAttempt(email, ip, valid);
 
   if (!user || !valid) {
     redirect(`/login?error=1&${qs}`);
   }
 
-  await createSession(user.id);
+  await createSession(user.id, user.sessionVersion);
   redirect(next || "/");
 }
 
@@ -83,26 +84,35 @@ export async function registerAction(formData: FormData) {
   if (password !== confirm) {
     redirect("/register?error=match");
   }
-  if (await isRateLimited(email)) {
+  const ip = await getClientIp();
+  if (await isRateLimited(email, ip)) {
     redirect("/register?error=rate");
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    await recordLoginAttempt(email, false);
+    await recordLoginAttempt(email, ip, false);
     redirect("/register?error=exists");
   }
 
   const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({ data: { email, passwordHash } });
-  await recordLoginAttempt(email, true);
+  await recordLoginAttempt(email, ip, true);
   await prisma.settings.create({ data: { userId: user.id } });
 
-  await createSession(user.id);
+  await createSession(user.id, user.sessionVersion);
   redirect("/");
 }
 
 export async function logoutAction() {
+  const userId = await requireUserId();
+  // Incrementa sessionVersion además de borrar la cookie local: si el token
+  // de esta sesión fue robado, deja de servir también para quien lo tenga,
+  // no solo para este navegador.
+  await prisma.user.update({
+    where: { id: userId },
+    data: { sessionVersion: { increment: 1 } },
+  });
   await destroySession();
   redirect("/login");
 }
@@ -122,7 +132,13 @@ export async function changePasswordAction(formData: FormData) {
   if (newPassword !== confirm) redirect("/cuenta?error=match");
 
   const passwordHash = await hashPassword(newPassword);
-  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  // sessionVersion++ invalida cualquier otra sesión activa (p. ej. un token
+  // robado) en el mismo movimiento que cambia la contraseña.
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash, sessionVersion: { increment: 1 } },
+  });
+  await createSession(updated.id, updated.sessionVersion);
   redirect("/cuenta?ok=1");
 }
 

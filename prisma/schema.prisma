@@ -26,10 +26,13 @@ enum BreakReason {
 // Una cuenta por persona. Todo lo demás cuelga de userId para que cualquier
 // consulta pueda limitarse a "solo lo que pertenece a este usuario" — ver src/lib/dal.ts.
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  // Se incrementa al cerrar sesión o cambiar la contraseña — invalida de golpe
+  // cualquier cookie de sesión ya emitida (robada o no) aunque siga sin caducar.
+  sessionVersion Int      @default(0)
+  createdAt      DateTime @default(now())
 
   habits     Habit[]
   habitLogs  HabitLog[]
@@ -50,13 +53,17 @@ model User {
 // Intentos de login/registro, fallidos o correctos, indexados por el email
 // enviado — no es una FK a User, para poder limitar intentos contra emails
 // que todavía no existen sin filtrar esa distinción por tiempo o errores.
+// También se indexa por ip para frenar a quien prueba una misma contraseña
+// contra muchos emails distintos, cosa que un límite solo por email no detecta.
 model LoginAttempt {
   id        String   @id @default(cuid())
   email     String
+  ip        String   @default("unknown")
   success   Boolean
   createdAt DateTime @default(now())
 
   @@index([email, createdAt])
+  @@index([ip, createdAt])
 }
 
 // Los hábitos FIXED_DAYS vencen en días concretos de la semana (1=lunes..7=domingo,

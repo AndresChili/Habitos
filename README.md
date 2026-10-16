@@ -53,6 +53,50 @@ Registro y login propios, cambio de contraseña, cierre de sesión, tema claro/o
 - PWA instalable
 - Desplegado en **Vercel**
 
+## 🚀 Instalación local
+
+Requiere Node.js 20+ y una base de datos PostgreSQL (el proyecto usa [Neon](https://neon.tech)).
+
+```bash
+git clone https://github.com/AndresChili/Habitos.git
+cd Habitos
+npm install
+```
+
+Copia `.env.example` a `.env.local` y rellena las variables:
+
+```bash
+cp .env.example .env.local
+```
+
+- `DATABASE_URL` / `DATABASE_URL_UNPOOLED`: cadena de conexión a Postgres. Con la integración de Neon en Vercel, se obtienen con `vercel env pull .env.local`.
+- `SESSION_SECRET`: secreto para firmar las cookies de sesión. Genera uno con:
+  ```bash
+  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  ```
+
+Sincroniza el esquema de Prisma con la base de datos y arranca en desarrollo:
+
+```bash
+npm run db:push
+npm run dev
+```
+
+La app queda disponible en `http://localhost:3000`.
+
+## ✅ Tests
+
+```bash
+npm run test       # una ejecución
+npm run test:watch # modo watch
+```
+
+Vitest corre en CI en cada push/PR a `main` (ver el badge arriba). Tests actuales cubren validación y utilidades de autenticación (`src/lib/auth.test.ts`).
+
+## 🔒 Seguridad
+
+Ver [SECURITY.md](./SECURITY.md) para el detalle de las medidas de autenticación (revocación de sesión, rate limiting por email e IP, resistencia a enumeración de usuarios) y limitaciones conocidas.
+
 ## Licencia
 
 [MIT](./LICENSE)
