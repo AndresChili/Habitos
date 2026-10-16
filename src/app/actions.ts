@@ -33,10 +33,18 @@ import { createBreak, deleteBreak } from "@/lib/breaks";
 import { dayKey, nowInTz } from "@/lib/dates";
 import type { BreakReason } from "@/generated/prisma/client";
 
+// Solo admite una ruta relativa interna — "next" llega desde un query param
+// bajo control del visitante del enlace, así que un valor como "https://evil.com"
+// o "//evil.com" (protocol-relative) se descarta en vez de redirigir fuera de la app.
+function safeNextPath(next: string): string {
+  if (!next.startsWith("/") || next.startsWith("//")) return "/";
+  return next;
+}
+
 export async function loginAction(formData: FormData) {
   const email = normalizeEmail(String(formData.get("email") ?? ""));
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/");
+  const next = safeNextPath(String(formData.get("next") ?? "/"));
   const qs = `next=${encodeURIComponent(next)}`;
 
   if (!email || !password) {
