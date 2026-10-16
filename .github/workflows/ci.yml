@@ -14,6 +14,7 @@ jobs:
       # hacen falta para que el cliente de Prisma se instancie sin lanzar al
       # cargar los módulos — ninguna ruta de la app se ejecuta durante el build.
       DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+      DATABASE_URL_UNPOOLED: "postgresql://user:pass@localhost:5432/db"
       SESSION_SECRET: "ci-only-dummy-secret"
     steps:
       - name: Checkout
