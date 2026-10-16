@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal";
 import { getSettings } from "@/lib/settings";
 import { getBreakRanges, isDateInBreak, type BreakRange } from "@/lib/breaks";
+import { isPausedOn, isCurrentlyPaused } from "@/lib/pureLogic";
 import { dayKey, isoWeekday, monthRange, nowInTz, parseDayKey, weekRange } from "@/lib/dates";
 import {
   addDays,
@@ -138,13 +139,7 @@ export async function resumeHabit(id: string, dateKeyToday: string) {
   await prisma.habitPause.update({ where: { id: open.id }, data: { toDate: dateKeyToday } });
 }
 
-export function isPausedOn(pauses: HabitPause[], date: string): boolean {
-  return pauses.some((p) => date >= p.fromDate && (p.toDate === null || date <= p.toDate));
-}
-
-export function isCurrentlyPaused(pauses: HabitPause[]): boolean {
-  return pauses.some((p) => p.toDate === null);
-}
+export { isPausedOn, isCurrentlyPaused };
 
 // Una pausa propia del hábito o una pausa global de cuenta (vacaciones,
 // enfermedad) cuentan igual aquí: ambas congelan el hábito ese día — no

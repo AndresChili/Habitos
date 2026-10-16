@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      # Valores ficticios: nada aquí conecta con una base de datos real. Solo
+      # hacen falta para que el cliente de Prisma se instancie sin lanzar al
+      # cargar los módulos — ninguna ruta de la app se ejecuta durante el build.
+      DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+      SESSION_SECRET: "ci-only-dummy-secret"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Comprobar tipos
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npm test
+
+      - name: Build de producción
+        run: npm run build

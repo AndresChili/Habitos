@@ -4,6 +4,8 @@ Aplicación web para organizar la vida diaria: hábitos, tareas, peso corporal y
 
 ### 🔗 [Probar la aplicación →](https://habitosproductivos.vercel.app)
 
+[![CI](https://github.com/AndresChili/Habitos/actions/workflows/ci.yml/badge.svg)](https://github.com/AndresChili/Habitos/actions/workflows/ci.yml)
+
 ---
 
 ## 📖 Qué es

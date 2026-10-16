@@ -2,8 +2,10 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/dal";
 import type { Break, BreakReason } from "@/generated/prisma/client";
+import { isDateInBreak, type BreakRange } from "@/lib/pureLogic";
 
-export type BreakRange = { fromDate: string; toDate: string | null };
+export type { BreakRange };
+export { isDateInBreak };
 
 export async function listBreaks(): Promise<Break[]> {
   const userId = await requireUserId();
@@ -16,10 +18,6 @@ export async function listBreaks(): Promise<Break[]> {
 export async function getBreakRanges(): Promise<BreakRange[]> {
   const userId = await requireUserId();
   return prisma.break.findMany({ where: { userId }, select: { fromDate: true, toDate: true } });
-}
-
-export function isDateInBreak(breaks: BreakRange[], date: string): boolean {
-  return breaks.some((b) => date >= b.fromDate && (b.toDate === null || date <= b.toDate));
 }
 
 // La pausa (si hay alguna) que cubre justo esta fecha — para mostrar el

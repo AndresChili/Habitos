@@ -5,6 +5,7 @@ import { getSettings } from "@/lib/settings";
 import { getRoutineForWeekday } from "@/lib/routines";
 import { dayKey, isoWeekday, nowInTz } from "@/lib/dates";
 import type { SetType } from "@/generated/prisma/client";
+import { isNewPr, estimateOneRm, type PrHistoryEntry } from "@/lib/pureLogic";
 
 // ---- Sesiones ----
 
@@ -242,22 +243,7 @@ export async function getPrHistory(exerciseId: string, excludeSetId?: string): P
   });
 }
 
-export type PrHistoryEntry = { weightKg: number; reps: number };
-
-// El PR es siempre el peso máximo levantado — nunca una serie con menos
-// peso que el máximo histórico, por muchas repeticiones que haga. Solo hay
-// una excepción: igualar el peso máximo actual con más repeticiones que
-// las que se hicieron la vez que se levantó ese mismo peso máximo también
-// cuenta como PR (progresar en reps sin perder el récord de peso).
-function isNewPr(setType: SetType, weightKg: number, reps: number, history: PrHistoryEntry[]): boolean {
-  if (setType === "WARMUP") return false;
-  if (history.length === 0) return true;
-  const bestWeight = Math.max(...history.map((h) => h.weightKg));
-  if (weightKg > bestWeight) return true;
-  if (weightKg < bestWeight) return false;
-  const bestRepsAtMaxWeight = Math.max(...history.filter((h) => h.weightKg === bestWeight).map((h) => h.reps));
-  return reps > bestRepsAtMaxWeight;
-}
+export type { PrHistoryEntry };
 
 // Solo puede haber un PR vigente a la vez por ejercicio — en cuanto una
 // serie nueva lo supera, la estrella se quita de cualquier otra serie de
@@ -382,11 +368,6 @@ export type ExercisePRs = {
   bestVolume: { volume: number; date: Date } | null;
   bestEstimatedOneRm: { value: number; weightKg: number; reps: number; date: Date } | null;
 };
-
-function estimateOneRm(weightKg: number, reps: number): number | null {
-  if (reps > 15) return null; // A partir de aquí la fórmula de Epley deja de ser fiable — mejor no fingir que no
-  return weightKg * (1 + reps / 30);
-}
 
 export async function computeExercisePRs(exerciseId: string): Promise<ExercisePRs | null> {
   const userId = await requireUserId();
